@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A股上市公司财务数据全景分析终端</title>
+    <!-- CSS 样式 -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- ECharts 本地依赖，部署时无需依赖外部 CDN -->
+    <script src="vendor/echarts.min.js"></script>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="navbar">
+        <div class="nav-brand">
+            <!-- SVG Logo -->
+            <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3v18h18"/>
+                <path d="m19 9-5 5-4-4-3 3"/>
+            </svg>
+            <h1>A股财务诊断全景终端</h1>
+            <span>PRO EDITION</span>
+        </div>
+
+        <nav class="nav-tabs">
+            <a href="#overview" class="nav-tab active" data-tab="overview">指挥中心</a>
+            <a href="#industry" class="nav-tab" data-tab="industry">行业透视</a>
+            <a href="#crisis" class="nav-tab" data-tab="crisis">危机穿越</a>
+            <a href="#risk" class="nav-tab" data-tab="risk">风险预警</a>
+            <a href="#factor" class="nav-tab" data-tab="factor">因子分解</a>
+            <a href="#company" class="nav-tab" data-tab="company">个股检索</a>
+        </nav>
+
+        <div class="search-wrapper">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+            </svg>
+            <input type="text" class="search-input" id="global-search" placeholder="输入代码或名称 (e.g. 600519)..." autocomplete="off">
+            <!-- 联想结果下拉框 -->
+            <div class="search-dropdown" id="global-search-dropdown"></div>
+        </div>
+    </header>
+
+    <div class="app-alert" id="app-alert" role="status" aria-live="polite"></div>
+
+    <!-- 主要内容区域 -->
+    <main class="app-container">
+        
+        <!-- 1. 指挥中心 (Overview) -->
+        <section id="overview-tab" class="tab-content active">
+            <!-- KPI 指标卡片行 -->
+            <div class="grid-cols-4">
+                <div class="card kpi-card">
+                    <div class="kpi-header">
+                        <span>A股覆盖企业</span>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <div class="kpi-value" id="kpi-companies">--</div>
+                    <div class="kpi-trend trend-down">
+                        <span>全样本上市公司合并口径</span>
+                    </div>
+                </div>
+                <div class="card kpi-card">
+                    <div class="kpi-header">
+                        <span>最新年度平均 M得分</span>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                    </div>
+                    <div class="kpi-value" id="kpi-mscore">--</div>
+                    <div class="kpi-trend trend-down" id="kpi-mscore-trend">
+                        <span>低于 -1.78 即盈余质量较好</span>
+                    </div>
+                </div>
+                <div class="card kpi-card">
+                    <div class="kpi-header">
+                        <span>最新高风险企业数</span>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    </div>
+                    <div class="kpi-value text-red" id="kpi-highrisk">--</div>
+                    <div class="kpi-trend" id="kpi-highrisk-trend">
+                        <span>M-Score 异常或高风险评分</span>
+                    </div>
+                </div>
+                <div class="card kpi-card">
+                    <div class="kpi-header">
+                        <span>最新财务重述嫌疑比率</span>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h8"/><path d="M8 17h8"/><path d="M10 9H8"/></svg>
+                    </div>
+                    <div class="kpi-value" id="kpi-restate">--%</div>
+                    <div class="kpi-trend" id="kpi-restate-trend">
+                        <span>重述风险或财务数据修正</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 图表第一排：趋势与分布 -->
+            <div class="grid-cols-12">
+                <div class="card col-span-8">
+                    <div class="card-title">
+                        <span>盈余质量年度演变趋势</span>
+                        <span>M-Score 均值 & 高风险公司比率</span>
+                    </div>
+                    <div class="chart-container" id="overview-trend-chart"></div>
+                </div>
+                <div class="card col-span-4">
+                    <div class="card-title">
+                        <span>最新全市场风险等级分布</span>
+                        <span>按评分标准划分</span>
+                    </div>
+                    <div class="chart-container" id="overview-dist-chart"></div>
+                </div>
+            </div>
+
+            <!-- 行业风险 Treemap -->
+            <div class="grid-cols-12">
+                <div class="card col-span-12">
+                    <div class="card-title">
+                        <span>行业板块风险分布地图 (Industry Risk Map)</span>
+                        <span>块大小=样本公司数, 颜色=风险指数均值 (可点击钻入详情)</span>
+                    </div>
+                    <div class="chart-container" id="overview-treemap-chart"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 行业透视 (Industry Intel) -->
+        <section id="industry-tab" class="tab-content">
+            <!-- 工具栏：对比选择 -->
+            <div class="toolbar">
+                <div class="toolbar-label">行业板块比较分析</div>
+                <div class="toolbar-select-area">
+                    <select class="custom-select" id="industry-select-1">
+                        <option value="">-- 选择对比行业A --</option>
+                    </select>
+                    <select class="custom-select" id="industry-select-2">
+                        <option value="">-- 选择对比行业B --</option>
+                    </select>
+                    <button class="btn btn-primary" id="industry-compare-btn">生成对比雷达</button>
+                    <button class="btn" id="industry-reset-btn">重置</button>
+                </div>
+            </div>
+
+            <!-- 核心数据：列表与因子雷达 -->
+            <div class="grid-cols-12">
+                <div class="card col-span-7">
+                    <div class="card-title">
+                        <span>各行业财务风险指标排名</span>
+                        <span>点击行业查看多维因子分解</span>
+                    </div>
+                    <div class="table-wrapper" style="max-height: 480px;">
+                        <table class="custom-table" id="industry-rank-table">
+                            <thead>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>行业名称</th>
+                                    <th>公司数</th>
+                                    <th>M得分均值</th>
+                                    <th>重述率</th>
+                                    <th>风险指数</th>
+                                    <th>详情</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- JS 渲染 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card col-span-5">
+                    <div class="card-title">
+                        <span>行业 8大因子风险雷达图</span>
+                        <span id="industry-radar-subtitle">当前选中: 房地产业 (K70)</span>
+                    </div>
+                    <div class="chart-container" id="industry-radar-chart"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 危机穿越 (Crisis Survivors) -->
+        <section id="crisis-tab" class="tab-content">
+            <!-- 第一排图表：韧性排名与表现 -->
+            <div class="grid-cols-12">
+                <div class="card col-span-5">
+                    <div class="card-title">
+                        <span>行业危机穿越综合韧性排名</span>
+                        <span>考虑穿越次数、逆势比例、修复年数、营收韧性</span>
+                    </div>
+                    <div class="chart-container" id="crisis-resilience-chart"></div>
+                </div>
+                <div class="card col-span-7">
+                    <div class="card-title">
+                        <span>历次危机板块营收增长中位数对比</span>
+                        <span>2008金融危机 / 2015股灾 / 2018去杠杆 / 2020疫情</span>
+                    </div>
+                    <div class="chart-container" id="crisis-comparison-chart"></div>
+                </div>
+            </div>
+
+            <!-- 散点分布图 -->
+            <div class="grid-cols-12">
+                <div class="card col-span-12">
+                    <div class="card-title">
+                        <span>危机穿越者散点分布 (Revenue Growth vs ROE)</span>
+                        <span>X轴=营收增长率, Y轴=最新ROE, 气泡大小=总资产, 颜色=行业门类 (可平移缩放)</span>
+                    </div>
+                    <div class="chart-container" id="crisis-scatter-chart"></div>
+                </div>
+            </div>
+
+            <!-- 危机穿越精英卡片墙 -->
+            <div class="card">
+                <div class="card-title">
+                    <span>危机穿越黄金清单 (Survivor Elite Wall)</span>
+                    <span>共 58 家企业穿越全部 4 次危机，且 2024年 ROE > 10%、资产负债率 < 60%</span>
+                </div>
+                <div class="survivor-grid" id="crisis-survivor-wall">
+                    <!-- JS 渲染 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 风险预警 (Risk Radar) -->
+        <section id="risk-tab" class="tab-content">
+            <!-- 风险热力图 -->
+            <div class="grid-cols-12">
+                <div class="card col-span-12">
+                    <div class="card-title">
+                        <span>财务风险演变热力图 (行业大类 × 年度)</span>
+                        <span>发散色阶表示行业财务重述与欺诈风险深度演变</span>
+                    </div>
+                    <div class="chart-container-lg" id="risk-heatmap-chart"></div>
+                </div>
+            </div>
+
+            <!-- 监控名单与红旗异象 -->
+            <div class="grid-cols-12">
+                <div class="card col-span-8">
+                    <div class="card-title">
+                        <span>高风险企业监控名单 (M得分偏离与高评分)</span>
+                        <span>实时监控重点异常目标</span>
+                    </div>
+                    <div class="table-wrapper" style="max-height: 400px;">
+                        <table class="custom-table" id="risk-monitor-table">
+                            <thead>
+                                <tr>
+                                    <th>代码</th>
+                                    <th>企业名称</th>
+                                    <th>年份</th>
+                                    <th>行业</th>
+                                    <th>M得分</th>
+                                    <th>综合评分</th>
+                                    <th>风险等级</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- JS 渲染 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card col-span-4">
+                    <div class="card-title">
+                        <span>红旗财务异象排查排名 (Top 20)</span>
+                        <span>按商誉占总资产比例或异常偏离度排查</span>
+                    </div>
+                    <div class="table-wrapper" style="max-height: 400px;">
+                        <table class="custom-table" id="risk-flag-table">
+                            <thead>
+                                <tr>
+                                    <th>代码</th>
+                                    <th>名称</th>
+                                    <th>商誉占比</th>
+                                    <th>其他应收款占比</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- JS 渲染 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. 因子分解 (Factor Anatomy) -->
+        <section id="factor-tab" class="tab-content">
+            <!-- 因子分解说明 -->
+            <div class="factor-card-grid">
+                <div class="factor-desc-card">
+                    <div class="factor-name">DSRI (应收账款指数)</div>
+                    <div>衡量应收账款增长率与主营收入增长率的比例。DSRI > 1.46 提示可能存在提前确认收入等盈余操纵嫌疑。</div>
+                </div>
+                <div class="factor-desc-card">
+                    <div class="factor-name">GMI (毛利率指数)</div>
+                    <div>前一年毛利率与当年毛利率的比率。GMI > 1.19 提示毛利率下降，公司面临激烈竞争，粉饰业绩动机增强。</div>
+                </div>
+                <div class="factor-desc-card">
+                    <div class="factor-name">AQI (资产质量指数)</div>
+                    <div>非流动资产及非货币资产占比变化。AQI > 1.25 提示公司将开支资本化、挂账非流动资产掩盖亏损。</div>
+                </div>
+                <div class="factor-desc-card">
+                    <div class="factor-name">SGI (营业收入指数)</div>
+                    <div>当年收入与前一年收入之比。高增速可能给管理层带来维持增长的盈利操纵压力，SGI > 1.60 需警惕。</div>
+                </div>
+                <div class="factor-desc-card">
+                    <div class="factor-name">DEPI (折旧率指数)</div>
+                    <div>前一年折旧率与当年折旧率之比。DEPI > 1.07 提示公司调低折旧率、延长资产折旧年限以提升虚假账面利润。</div>
+                </div>
+                <div class="factor-desc-card">
+                    <div class="factor-name">SGAI (销管费用指数)</div>
+                    <div>当年销管费用率与前一年之比。SGAI > 1.05 提示效率下滑；SGAI 异常偏低可能预示少计费用或研发资本化。</div>
+                </div>
+                <div class="factor-desc-card">
+                    <div class="factor-name">LVGI (杠杆率指数)</div>
+                    <div>当年资产负债率与前一年之比。LVGI > 1.11 提示负债水平上升，偿债压力变大，可能导致操纵动机。</div>
+                </div>
+                <div class="factor-desc-card">
+                    <div class="factor-name">TATA (应计总额占比)</div>
+                    <div>（营业利润 - 经营活动现金流）/总资产。如果 TATA 长期大幅为正值，说明利润缺乏现金支撑，质量差。</div>
+                </div>
+            </div>
+
+            <!-- 图表：分布直方图与相关性热力图 -->
+            <div class="grid-cols-12">
+                <div class="card col-span-7">
+                    <div class="card-title">
+                        <span>M-Score 核心因子全市场数值分布</span>
+                        <div class="toolbar-select-area" style="margin: 0;">
+                            <select class="custom-select" id="factor-dist-select" style="padding: 2px 8px; font-size: 11px;">
+                                <option value="DSRI">DSRI (应收账款)</option>
+                                <option value="GMI">GMI (毛利率)</option>
+                                <option value="AQI">AQI (资产质量)</option>
+                                <option value="SGI">SGI (营收增长)</option>
+                                <option value="DEPI">DEPI (折旧比率)</option>
+                                <option value="SGAI">SGAI (销管费用)</option>
+                                <option value="LVGI">LVGI (杠杆指数)</option>
+                                <option value="TATA">TATA (应计项)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container" id="factor-distribution-chart"></div>
+                </div>
+                <div class="card col-span-5">
+                    <div class="card-title">
+                        <span>M-Score 8大因子互相关性矩阵 (Heatmap)</span>
+                        <span>反映不同财务红旗之间的共生相关性</span>
+                    </div>
+                    <div class="chart-container" id="factor-corr-chart"></div>
+                </div>
+            </div>
+
+            <!-- 因子行业表现表格 -->
+            <div class="card">
+                <div class="card-title">
+                    <span>各行业财务因子均值偏离排名</span>
+                    <div class="toolbar-select-area" style="margin: 0;">
+                        <select class="custom-select" id="factor-rank-select" style="padding: 2px 8px; font-size: 11px;">
+                            <option value="DSRI">DSRI (应收账款)</option>
+                            <option value="GMI">GMI (毛利率)</option>
+                            <option value="AQI">AQI (资产质量)</option>
+                            <option value="SGI">SGI (营收增长)</option>
+                            <option value="DEPI">DEPI (折旧比率)</option>
+                            <option value="SGAI">SGAI (销管费用)</option>
+                            <option value="LVGI">LVGI (杠杆指数)</option>
+                            <option value="TATA">TATA (应计项)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-wrapper" style="max-height: 300px;">
+                    <table class="custom-table" id="factor-industry-rank-table">
+                        <thead>
+                            <tr>
+                                <th>行业代码</th>
+                                <th>行业名称</th>
+                                <th>当前因子平均值</th>
+                                <th>全市场偏差 (%)</th>
+                                <th>偏离等级</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- JS 渲染 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. 个股检索 (Company Search Ticker Landing) -->
+        <section id="company-tab" class="tab-content">
+            <div class="search-hero">
+                <h2>输入企业代码或简称进行诊断</h2>
+                <p>查询历史财务波动、M-Score盈余质量拆解、9项红旗雷达以及危机韧性等级</p>
+                
+                <div class="search-large-wrapper">
+                    <svg class="search-large-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                    </svg>
+                    <input type="text" class="search-large-input" id="large-search" placeholder="输入股票代码、拼音或公司简称 (e.g. 600519)..." autocomplete="off">
+                    <!-- 联想结果下拉框 -->
+                    <div class="search-dropdown" id="large-search-dropdown" style="left: 0; width: 100%; top: calc(100% + 10px);"></div>
+                </div>
+
+                <div class="popular-chips">
+                    <span class="popular-chip" data-code="600519">贵州茅台</span>
+                    <span class="popular-chip" data-code="600276">恒瑞医药</span>
+                    <span class="popular-chip" data-code="600406">国电南瑞</span>
+                    <span class="popular-chip" data-code="601872">招商轮船</span>
+                    <span class="popular-chip" data-code="600521">华海药业</span>
+                    <span class="popular-chip" data-code="600763">通策医疗</span>
+                    <span class="popular-chip" data-code="000858">五粮液</span>
+                    <span class="popular-chip" data-code="600030">中信证券</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 右侧滑出个股诊断抽屉面板 (Drawer Pattern) -->
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+    <div class="drawer" id="drawer">
+        <div class="drawer-header">
+            <div class="drawer-title-area">
+                <h2 id="drawer-company-name">--</h2>
+                <div class="drawer-subtitle">
+                    <span id="drawer-company-code">--</span>
+                    <span id="drawer-company-ind">--</span>
+                    <span class="badge badge-low" id="drawer-company-risk">--</span>
+                </div>
+            </div>
+            <button class="drawer-close" id="drawer-close-btn">
+                <svg class="drawer-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="drawer-content">
+            <!-- 风险仪表盘 -->
+            <div class="drawer-section">
+                <div class="drawer-section-title">财务安全偏离度 (Gauge)</div>
+                <div class="chart-container-sm" id="drawer-gauge-chart"></div>
+            </div>
+
+            <!-- 历史趋势 -->
+            <div class="drawer-section">
+                <div class="drawer-section-title">历史 M-Score & 综合风险评分趋势</div>
+                <div class="chart-container-sm" id="drawer-trend-chart"></div>
+            </div>
+
+            <!-- 红旗雷达 -->
+            <div class="drawer-section">
+                <div class="drawer-section-title">红旗财务异象雷达 (对标行业均值)</div>
+                <div class="chart-container-sm" id="drawer-radar-chart"></div>
+            </div>
+
+            <!-- 财务数据表 -->
+            <div class="drawer-section">
+                <div class="drawer-section-title">财务核心数据明细表</div>
+                <div class="table-wrapper">
+                    <table class="custom-table" id="drawer-finance-table" style="font-size: 11px;">
+                        <thead>
+                            <tr>
+                                <th>年份</th>
+                                <th>营收(亿)</th>
+                                <th>净利(亿)</th>
+                                <th>资产(亿)</th>
+                                <th>M-Score</th>
+                                <th>评分</th>
+                                <th>风险</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- JS 渲染 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 静态数据库 js 引入 -->
+    <script src="dashboard_data.js"></script>
+    
+    <!-- 核心控制及各模块 js 引入 -->
+    <script src="js/utils.js"></script>
+    <script src="js/overview.js"></script>
+    <script src="js/industry.js"></script>
+    <script src="js/crisis.js"></script>
+    <script src="js/risk.js"></script>
+    <script src="js/factor.js"></script>
+    <script src="js/company.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
