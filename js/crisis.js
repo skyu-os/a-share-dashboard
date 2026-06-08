@@ -51,8 +51,8 @@ const CrisisModule = {
             grid: {
                 left: '3%',
                 right: '8%',
-                bottom: '3%',
-                top: '5%',
+                bottom: '2%',
+                top: '3%',
                 containLabel: true
             },
             xAxis: {
@@ -144,8 +144,8 @@ const CrisisModule = {
             grid: {
                 left: '3%',
                 right: '3%',
-                bottom: '10%',
-                top: '12%',
+                bottom: '6%',
+                top: '10%',
                 containLabel: true
             },
             xAxis: {
@@ -230,8 +230,8 @@ const CrisisModule = {
             grid: {
                 left: '3%',
                 right: '18%',
-                bottom: '10%',
-                top: '8%',
+                bottom: '6%',
+                top: '5%',
                 containLabel: true
             },
             tooltip: {

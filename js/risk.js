@@ -78,8 +78,8 @@ const RiskModule = {
                 }
             },
             grid: {
-                top: '5%',
-                bottom: '10%',
+                top: '3%',
+                bottom: '6%',
                 left: '8%',
                 right: '4%',
                 containLabel: true

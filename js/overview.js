@@ -83,8 +83,8 @@ const OverviewModule = {
             grid: {
                 left: '4%',
                 right: '4%',
-                bottom: '10%',
-                top: '12%',
+                bottom: '6%',
+                top: '10%',
                 containLabel: true
             },
             xAxis: [
@@ -179,14 +179,14 @@ const OverviewModule = {
                 left: 'center',
                 itemWidth: 10,
                 itemHeight: 10,
-                textStyle: { fontSize: 11 }
+                textStyle: { fontSize: 10 }
             },
             series: [
                 {
                     name: '风险等级',
                     type: 'pie',
-                    radius: ['45%', '70%'],
-                    center: ['50%', '42%'],
+                    radius: ['40%', '65%'],
+                    center: ['50%', '44%'],
                     avoidLabelOverlap: false,
                     itemStyle: {
                         borderRadius: 4,
@@ -216,7 +216,7 @@ const OverviewModule = {
                 {
                     type: 'text',
                     left: 'center',
-                    top: '38%',
+                    top: '40%',
                     style: {
                         text: total + '\n样本企业',
                         textAlign: 'center',

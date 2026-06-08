@@ -245,8 +245,8 @@ const IndustryModule = {
             },
             radar: {
                 indicator: indicators,
-                radius: '62%',
-                center: ['50%', '46%'],
+                radius: '65%',
+                center: ['50%', '48%'],
                 shape: 'polygon',
                 splitNumber: 5,
                 axisName: {

@@ -101,8 +101,8 @@ const FactorModule = {
             grid: {
                 left: '3%',
                 right: '4%',
-                bottom: '10%',
-                top: '8%',
+                bottom: '6%',
+                top: '5%',
                 containLabel: true
             },
             xAxis: {
@@ -178,8 +178,8 @@ const FactorModule = {
                 }
             },
             grid: {
-                top: '5%',
-                bottom: '10%',
+                top: '4%',
+                bottom: '8%',
                 left: '12%',
                 right: '4%',
                 containLabel: true
