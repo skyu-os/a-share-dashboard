@@ -110,40 +110,41 @@ const Utils = {
     // ECharts 全局注册主题与配色配置
     getChartTheme() {
         return {
-            color: ['#58a6ff', '#bc8cff', '#39d2c0', '#f0883e', '#f778ba', '#79c0ff'],
+            color: ['#5b9eff', '#a78bfa', '#2dd4bf', '#f5a623', '#f778ba', '#79c0ff', '#34d399', '#fb923c'],
             backgroundColor: 'transparent',
             textStyle: {
-                fontFamily: "'Inter', 'Noto Sans SC', sans-serif",
-                color: '#8b949e'
+                fontFamily: "'Inter', 'SF Pro Display', 'Noto Sans SC', sans-serif",
+                color: '#7f8da6'
             },
             title: {
-                textStyle: { color: '#e6edf3' }
+                textStyle: { color: '#eaf0f8' }
             },
             line: {
                 itemStyle: { borderWidth: 2 },
-                lineStyle: { width: 3 }
+                lineStyle: { width: 2.5 }
             },
             categoryAxis: {
-                axisLine: { lineStyle: { color: '#30363d' } },
-                axisTick: { lineStyle: { color: '#30363d' } },
-                axisLabel: { color: '#8b949e' },
+                axisLine: { lineStyle: { color: 'rgba(56, 72, 112, 0.3)' } },
+                axisTick: { lineStyle: { color: 'rgba(56, 72, 112, 0.3)' } },
+                axisLabel: { color: '#7f8da6', fontSize: 11 },
                 splitLine: { show: false }
             },
             valueAxis: {
                 axisLine: { show: false },
                 axisTick: { show: false },
-                axisLabel: { color: '#8b949e' },
-                splitLine: { lineStyle: { color: '#21262d' } }
+                axisLabel: { color: '#7f8da6', fontSize: 11 },
+                splitLine: { lineStyle: { color: 'rgba(56, 72, 112, 0.12)' } }
             },
             legend: {
-                textStyle: { color: '#8b949e' }
+                textStyle: { color: '#7f8da6', fontSize: 11 }
             },
             tooltip: {
-                backgroundColor: '#161b22',
-                borderColor: '#30363d',
-                textStyle: { color: '#e6edf3' },
+                backgroundColor: 'rgba(14, 20, 33, 0.95)',
+                borderColor: 'rgba(56, 72, 112, 0.3)',
+                textStyle: { color: '#eaf0f8', fontSize: 12 },
                 borderWidth: 1,
-                borderRadius: 4
+                borderRadius: 8,
+                extraCssText: 'backdrop-filter: blur(12px); box-shadow: 0 8px 32px rgba(0,0,0,0.4);'
             }
         };
     },
