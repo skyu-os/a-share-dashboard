@@ -91,6 +91,7 @@ const CompanyModule = {
         this.gaugeChart = Utils.createChart(chartDom, this.gaugeChart);
         if (!this.gaugeChart) return;
 
+        const tc = Utils.themeColors();
         const score = riskScore !== null && riskScore !== undefined && !isNaN(riskScore)
             ? parseFloat(Number(riskScore).toFixed(1))
             : 0;
@@ -122,12 +123,12 @@ const CompanyModule = {
                         length: '65%',
                         width: 4,
                         offsetCenter: [0, -4],
-                        itemStyle: { color: '#e6edf3' }
+                        itemStyle: { color: tc.textLight }
                     },
                     axisTick: { length: 3, lineStyle: { color: 'auto', width: 1 } },
                     splitLine: { length: 8, lineStyle: { color: 'auto', width: 2 } },
                     axisLabel: {
-                        color: '#8b949e',
+                        color: tc.textSecondary,
                         fontSize: 10,
                         distance: -35,
                         formatter: function (value) {
@@ -142,7 +143,7 @@ const CompanyModule = {
                     detail: {
                         valueAnimation: true,
                         formatter: '{value}',
-                        color: '#f0f3f6',
+                        color: tc.textBody,
                         fontSize: 18,
                         fontWeight: 'bold',
                         offsetCenter: [0, '15%']
