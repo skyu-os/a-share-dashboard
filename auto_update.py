@@ -25,8 +25,11 @@ import numpy as np
 # 配置
 # ============================================================
 SCRIPT_DIR  = os.path.dirname(os.path.abspath(__file__))   # dashboard/
-PROJECT_DIR = os.path.dirname(SCRIPT_DIR)                   # A股上市公司财务数据合集/
-CSV_PATH    = os.path.join(PROJECT_DIR, "screening_results.csv")
+DATA_DIR    = os.path.join(SCRIPT_DIR, "data")             # dashboard/data/
+# 兼容：若 data/ 不存在则回退到父目录（旧版布局）
+if not os.path.isdir(DATA_DIR):
+    DATA_DIR = os.path.dirname(SCRIPT_DIR)
+CSV_PATH    = os.path.join(DATA_DIR, "screening_results.csv")
 JS_OUTPUT   = os.path.join(SCRIPT_DIR, "dashboard_data.js")
 
 # 东方财富 API

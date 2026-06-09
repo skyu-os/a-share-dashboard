@@ -8,9 +8,18 @@ import json
 import numpy as np
 import os
 
-# 定义路径
-WORKSPACE_DIR = r"e:\A股上市公司财务数据合集"
-OUTPUT_DIR = os.path.join(WORKSPACE_DIR, "dashboard")
+# 定义路径 — 优先使用仓库内 data/ 目录（兼容 GitHub Actions），回退到本地路径
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_DATA_DIR = os.path.join(SCRIPT_DIR, "data")
+_LOCAL_DATA_DIR = r"e:\A股上市公司财务数据合集"
+
+# 如果仓库内 data/ 有 screening_results.csv 则使用它，否则用本地路径
+if os.path.isfile(os.path.join(_REPO_DATA_DIR, "screening_results.csv")):
+    WORKSPACE_DIR = _REPO_DATA_DIR
+else:
+    WORKSPACE_DIR = _LOCAL_DATA_DIR
+
+OUTPUT_DIR = SCRIPT_DIR
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # 辅助函数：替换 NaN 为 None (JSON 里的 null) 并进行精度控制
