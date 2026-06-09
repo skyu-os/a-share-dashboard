@@ -28,6 +28,7 @@
             <a href="#crisis" class="nav-tab" data-tab="crisis">危机穿越</a>
             <a href="#risk" class="nav-tab" data-tab="risk">风险预警</a>
             <a href="#factor" class="nav-tab" data-tab="factor">因子分解</a>
+            <a href="#watchlist" class="nav-tab" data-tab="watchlist">我的关注</a>
             <a href="#screener" class="nav-tab" data-tab="screener">智能选股</a>
             <a href="#company" class="nav-tab" data-tab="company">个股检索</a>
         </nav>
@@ -462,7 +463,65 @@
             </div>
         </section>
 
-        <!-- 7. 智能选股 (Smart Screener) -->
+        <!-- 7. 我的关注 (Watchlist) -->
+        <section id="watchlist-tab" class="tab-content">
+            <!-- 行业切换子标签 -->
+            <div class="watchlist-subtabs" id="watchlist-subtabs">
+                <button class="watchlist-subtab active" data-sub="sst">SST 固态变压器</button>
+                <button class="watchlist-subtab" data-sub="storage">储能</button>
+                <button class="watchlist-subtab" data-sub="newenergy">新能源</button>
+            </div>
+
+            <!-- 核心观点卡片 -->
+            <div class="watchlist-thesis-card" id="watchlist-thesis">
+                <!-- JS 渲染 -->
+            </div>
+
+            <!-- 风险提示卡片 (仅SST显示) -->
+            <div class="watchlist-risk-alert" id="watchlist-risk-alert" style="display: none;">
+                <!-- JS 渲染 -->
+            </div>
+
+            <!-- 关注标的监控表 -->
+            <div class="card watchlist-table-card">
+                <div class="card-title">
+                    <span id="watchlist-table-title">关注标的实时监控</span>
+                    <span id="watchlist-table-subtitle">点击行查看个股诊断</span>
+                </div>
+                <div class="table-wrapper" style="max-height: 480px; overflow-y: auto;">
+                    <table class="custom-table watchlist-table" id="watchlist-table">
+                        <thead>
+                            <tr>
+                                <th>梯队</th>
+                                <th>代码</th>
+                                <th>企业名称</th>
+                                <th>投资逻辑</th>
+                                <th>M-Score</th>
+                                <th>风险等级</th>
+                                <th>风险评分</th>
+                                <th>营收(亿)</th>
+                                <th>净利(亿)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="watchlist-table-body">
+                            <!-- JS 渲染 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 催化剂时间线 -->
+            <div class="card watchlist-catalyst-card" id="watchlist-catalyst-card">
+                <div class="card-title">
+                    <span>催化剂时间线</span>
+                </div>
+                <div class="watchlist-catalyst-list" id="watchlist-catalyst-list">
+                    <!-- JS 渲染 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. 智能选股 (Smart Screener) -->
         <section id="screener-tab" class="tab-content">
             <!-- 快筛预设 -->
             <div class="screener-presets">
@@ -705,6 +764,7 @@
     <script src="js/factor.js"></script>
     <script src="js/company.js"></script>
     <script src="js/screener.js"></script>
+    <script src="js/watchlist.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

@@ -95,6 +95,9 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'screener':
                 if (typeof ScreenerModule !== 'undefined') ScreenerModule.init();
                 break;
+            case 'watchlist':
+                if (typeof WatchlistModule !== 'undefined') WatchlistModule.init();
+                break;
             case 'company':
                 if (typeof CompanyModule !== 'undefined') CompanyModule.initSearchPage();
                 break;
