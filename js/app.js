@@ -92,6 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'factor':
                 if (typeof FactorModule !== 'undefined') FactorModule.init();
                 break;
+            case 'screener':
+                if (typeof ScreenerModule !== 'undefined') ScreenerModule.init();
+                break;
             case 'company':
                 if (typeof CompanyModule !== 'undefined') CompanyModule.initSearchPage();
                 break;
