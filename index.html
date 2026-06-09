@@ -35,7 +35,7 @@
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
             </svg>
-            <input type="text" class="search-input" id="global-search" placeholder="输入代码或名称 (e.g. 600519)..." autocomplete="off">
+            <input type="text" class="search-input" id="global-search" placeholder="搜索代码、名称或行业 (e.g. 600519, 茅台, 房地产)..." autocomplete="off">
             <!-- 联想结果下拉框 -->
             <div class="search-dropdown" id="global-search-dropdown"></div>
         </div>
@@ -403,7 +403,7 @@
                     <svg class="search-large-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
                     </svg>
-                    <input type="text" class="search-large-input" id="large-search" placeholder="输入股票代码、拼音或公司简称 (e.g. 600519)..." autocomplete="off">
+                    <input type="text" class="search-large-input" id="large-search" placeholder="搜索代码、名称或行业 (e.g. 600519, 茅台, 制造业)..." autocomplete="off">
                     <!-- 联想结果下拉框 -->
                     <div class="search-dropdown" id="large-search-dropdown" style="left: 0; width: 100%; top: calc(100% + 10px);"></div>
                 </div>
@@ -417,6 +417,46 @@
                     <span class="popular-chip" data-code="600763">通策医疗</span>
                     <span class="popular-chip" data-code="000858">五粮液</span>
                     <span class="popular-chip" data-code="600030">中信证券</span>
+                </div>
+
+                <div class="trend-filters">
+                    <span class="trend-filter-label">趋势快筛：</span>
+                    <button class="trend-chip" data-filter="safe_lowrisk">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l2 4h4l-3 3 1 4-4-2-4 2 1-4-3-3h4z"/></svg>
+                        安全白马
+                    </button>
+                    <button class="trend-chip" data-filter="mscore_improve_3y">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2 12 6 6 10 9 14 3"/><polyline points="10 3 14 3 14 7"/></svg>
+                        M-Score 连续改善
+                    </button>
+                    <button class="trend-chip" data-filter="revenue_grow_3y">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2 14 5 9 9 11 14 2"/><circle cx="14" cy="2" r="1.5"/></svg>
+                        营收连续增长
+                    </button>
+                    <button class="trend-chip" data-filter="risk_decline_3y">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2 4 6 8 10 6 14 13"/><polyline points="10 13 14 13 14 9"/></svg>
+                        风险逐年下降
+                    </button>
+                    <button class="trend-chip" data-filter="crisis_survivor">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3"/><circle cx="8" cy="8" r="3"/></svg>
+                        危机穿越者
+                    </button>
+                    <button class="trend-chip" data-filter="big_revenue">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="3" height="8" rx="0.5"/><rect x="6.5" y="3" width="3" height="11" rx="0.5"/><rect x="11" y="1" width="3" height="13" rx="0.5"/></svg>
+                        大规模优质
+                    </button>
+                </div>
+            </div>
+
+            <!-- 趋势筛选结果区 -->
+            <div id="trend-filter-results" class="trend-results" style="display: none;">
+                <div class="trend-results-header">
+                    <span class="trend-results-title" id="trend-results-title">筛选结果</span>
+                    <span class="trend-results-count" id="trend-results-count">0 家企业</span>
+                    <button class="trend-results-close" id="trend-results-close" title="关闭筛选结果">&times;</button>
+                </div>
+                <div class="trend-results-body" id="trend-results-body">
+                    <!-- JS 渲染 -->
                 </div>
             </div>
         </section>
