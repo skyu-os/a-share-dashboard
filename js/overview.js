@@ -159,6 +159,7 @@ const OverviewModule = {
 
         const levels = SCREENING_SUMMARY.risk_levels;
         const total = SCREENING_SUMMARY.latest_companies;
+        const tc = Utils.themeColors();
 
         const data = [
             { value: levels["低风险"] || 0, name: '低风险' },
@@ -190,7 +191,7 @@ const OverviewModule = {
                     avoidLabelOverlap: false,
                     itemStyle: {
                         borderRadius: 4,
-                        borderColor: '#121824',
+                        borderColor: tc.pieBorder,
                         borderWidth: 2
                     },
                     label: {
@@ -220,7 +221,7 @@ const OverviewModule = {
                     style: {
                         text: total + '\n样本企业',
                         textAlign: 'center',
-                        fill: '#f0f3f6',
+                        fill: tc.textBody,
                         fontSize: 14,
                         fontWeight: 'bold'
                     }
@@ -247,6 +248,8 @@ const OverviewModule = {
             indcd: item.Indcd
         })).filter(d => d.value > 0);
 
+        const tc = Utils.themeColors();
+
         const option = {
             tooltip: {
                 formatter: function (info) {
@@ -270,7 +273,7 @@ const OverviewModule = {
                 inRange: {
                     color: ['rgba(63,185,80,0.85)', 'rgba(210,153,34,0.85)', 'rgba(248,81,73,0.85)']
                 },
-                textStyle: { color: '#8b949e' }
+                textStyle: { color: tc.textSecondary }
             },
             series: [
                 {
@@ -285,7 +288,7 @@ const OverviewModule = {
                         fontSize: 11
                     },
                     itemStyle: {
-                        borderColor: '#0a0e14',
+                        borderColor: tc.treemapBorder,
                         borderWidth: 1,
                         gapWidth: 1
                     },

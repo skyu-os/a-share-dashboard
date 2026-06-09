@@ -140,6 +140,8 @@ const IndustryModule = {
         this.radarChart = Utils.createChart(chartDom, this.radarChart);
         if (!this.radarChart) return;
 
+        const tc = Utils.themeColors();
+
         // 获取对比框的行业
         const select1 = document.getElementById('industry-select-1');
         const select2 = document.getElementById('industry-select-2');
@@ -234,14 +236,14 @@ const IndustryModule = {
         const option = {
             tooltip: {
                 trigger: 'item',
-                backgroundColor: '#161b22',
-                borderColor: '#30363d',
-                textStyle: { color: '#e6edf3' }
+                backgroundColor: tc.tooltipBg,
+                borderColor: tc.tooltipBorder,
+                textStyle: { color: tc.textLight }
             },
             legend: {
                 bottom: 0,
                 left: 'center',
-                textStyle: { color: '#8b949e', fontSize: 11 }
+                textStyle: { color: tc.textSecondary, fontSize: 11 }
             },
             radar: {
                 indicator: indicators,
@@ -250,23 +252,23 @@ const IndustryModule = {
                 shape: 'polygon',
                 splitNumber: 5,
                 axisName: {
-                    color: '#8b949e',
+                    color: tc.textSecondary,
                     fontSize: 11
                 },
                 splitLine: {
                     lineStyle: {
-                        color: 'rgba(48, 54, 61, 0.5)'
+                        color: tc.radarLine
                     }
                 },
                 splitArea: {
                     show: true,
                     areaStyle: {
-                        color: ['rgba(22, 27, 34, 0.3)', 'rgba(10, 14, 20, 0.5)']
+                        color: [tc.radarArea1, tc.radarArea2]
                     }
                 },
                 axisLine: {
                     lineStyle: {
-                        color: 'rgba(48, 54, 61, 0.5)'
+                        color: tc.radarLine
                     }
                 }
             },

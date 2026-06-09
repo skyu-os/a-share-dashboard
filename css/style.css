@@ -1,6 +1,7 @@
 /*
- * A股财务数据全景仪表盘 - 样式系统 v2.0
+ * A股财务数据全景仪表盘 - 样式系统 v2.1
  * Glassmorphism Dark Terminal — 深色科技玻璃拟态设计
+ * + Light Mode 浅色主题
  */
 
 :root {
@@ -44,6 +45,37 @@
     --radius-md: 10px;
     --radius-lg: 16px;
     --radius-xl: 20px;
+}
+
+/* ─── Light Theme ─── */
+[data-theme="light"] {
+    --bg-primary: #f0f2f5;
+    --bg-secondary: rgba(255, 255, 255, 0.88);
+    --bg-tertiary: rgba(240, 243, 248, 0.8);
+    --bg-input: rgba(255, 255, 255, 0.95);
+    --bg-glass: rgba(255, 255, 255, 0.65);
+
+    --border-default: rgba(180, 190, 210, 0.45);
+    --border-hover: rgba(91, 158, 255, 0.5);
+    --border-focus: #3b82f6;
+    --border-glass: rgba(91, 158, 255, 0.12);
+
+    --text-primary: #1a202c;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+
+    --accent-blue: #3b82f6;
+    --accent-cyan: #0d9488;
+    --accent-purple: #7c3aed;
+    --accent-amber: #d97706;
+    --glow-color: rgba(59, 130, 246, 0.08);
+    --glow-cyan: rgba(13, 148, 136, 0.06);
+
+    --risk-low: #16a34a;
+    --risk-watch: #ca8a04;
+    --risk-medium: #ea580c;
+    --risk-high: #dc2626;
+    --risk-extreme: #b91c1c;
 }
 
 /* ─── Reset ─── */
@@ -915,6 +947,151 @@ body {
     border-color: rgba(91, 158, 255, 0.25);
     transform: translateY(-1px);
 }
+
+/* ═══════════════════════════════════════════════
+   LIGHT THEME OVERRIDES
+   ═══════════════════════════════════════════════ */
+[data-theme="light"] body {
+    background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.06), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(124, 58, 237, 0.04), transparent);
+}
+[data-theme="light"] ::-webkit-scrollbar-track { background: rgba(0,0,0,0.04); }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.2); }
+
+[data-theme="light"] .navbar {
+    background: rgba(255, 255, 255, 0.82);
+    border-bottom-color: var(--border-default);
+}
+[data-theme="light"] .nav-brand h1 {
+    background: linear-gradient(135deg, #1a202c 20%, var(--accent-blue) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+[data-theme="light"] .nav-brand span {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(124, 58, 237, 0.08));
+    border-color: rgba(59, 130, 246, 0.15);
+}
+[data-theme="light"] .nav-tabs {
+    background: rgba(241, 245, 249, 0.6);
+}
+[data-theme="light"] .nav-tab.active {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.05));
+    border-color: rgba(59, 130, 246, 0.25);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.06), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+[data-theme="light"] .search-dropdown {
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(59, 130, 246, 0.06);
+}
+[data-theme="light"] .card {
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.06),
+        0 0 0 1px var(--border-glass);
+}
+[data-theme="light"] .card:hover {
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.08),
+        0 0 16px var(--glow-color);
+}
+[data-theme="light"] .kpi-card {
+    background: linear-gradient(145deg, rgba(255,255,255,0.8) 0%, rgba(248,250,252,0.6) 100%);
+}
+[data-theme="light"] .kpi-value {
+    background: linear-gradient(180deg, #1a202c 40%, #475569 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+[data-theme="light"] .kpi-value.text-red {
+    background: linear-gradient(180deg, #dc2626 30%, rgba(220, 38, 38, 0.6) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+[data-theme="light"] .custom-table th {
+    background: rgba(248, 250, 252, 0.8);
+}
+[data-theme="light"] .custom-table tr:hover td {
+    background: rgba(59, 130, 246, 0.04);
+}
+[data-theme="light"] .toolbar {
+    background: rgba(248, 250, 252, 0.7);
+}
+[data-theme="light"] .custom-select option {
+    background: #fff;
+}
+[data-theme="light"] .survivor-card {
+    background: rgba(255, 255, 255, 0.5);
+}
+[data-theme="light"] .factor-desc-card {
+    background: rgba(124, 58, 237, 0.03);
+}
+[data-theme="light"] .drawer {
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.99));
+    box-shadow: -20px 0 60px rgba(0, 0, 0, 0.12);
+}
+[data-theme="light"] .drawer-header {
+    background: rgba(59, 130, 246, 0.03);
+}
+[data-theme="light"] .search-hero h2 {
+    background: linear-gradient(135deg, #1a202c 30%, var(--accent-blue) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+[data-theme="light"] .search-large-input {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .badge-low {
+    background: rgba(22, 163, 74, 0.08);
+    border-color: rgba(22, 163, 74, 0.2);
+}
+[data-theme="light"] .badge-watch {
+    background: rgba(202, 138, 4, 0.08);
+    border-color: rgba(202, 138, 4, 0.2);
+}
+[data-theme="light"] .badge-medium {
+    background: rgba(234, 88, 12, 0.08);
+    border-color: rgba(234, 88, 12, 0.2);
+}
+[data-theme="light"] .badge-high {
+    background: rgba(220, 38, 38, 0.08);
+    border-color: rgba(220, 38, 38, 0.2);
+}
+[data-theme="light"] .badge-extreme {
+    background: rgba(185, 28, 28, 0.08);
+    border-color: rgba(185, 28, 28, 0.2);
+}
+
+/* Theme toggle button */
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid var(--border-default);
+    background: var(--bg-glass);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+    margin-left: 8px;
+    backdrop-filter: blur(8px);
+}
+.theme-toggle:hover {
+    color: var(--accent-blue);
+    border-color: var(--border-hover);
+    background: rgba(91, 158, 255, 0.06);
+}
+.theme-toggle svg { width: 18px; height: 18px; }
+.theme-toggle .icon-sun  { display: none; }
+.theme-toggle .icon-moon { display: block; }
+[data-theme="light"] .theme-toggle .icon-sun  { display: block; }
+[data-theme="light"] .theme-toggle .icon-moon { display: none; }
 
 /* ═══════════════════════════════════════════════
    ANIMATIONS

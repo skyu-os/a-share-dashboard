@@ -3,11 +3,21 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. 注册 ECharts 深色终端主题
+    // 0. 恢复上次保存的主题偏好
+    Utils.initTheme();
+
+    // 1. 注册 ECharts 深色 & 浅色双主题
     const chartsReady = Utils.ensureEcharts();
     if (chartsReady) {
         echarts.registerTheme('terminal', Utils.getChartTheme());
+        echarts.registerTheme('terminal-light', Utils.getLightChartTheme());
         Utils.clearAlert();
+    }
+
+    // 1.5 绑定主题切换按钮
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => Utils.toggleTheme());
     }
 
     // 2. 主页面 Tab 路由控制

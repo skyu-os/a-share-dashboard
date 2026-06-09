@@ -163,6 +163,8 @@ const CompanyModule = {
         this.trendChart = Utils.createChart(chartDom, this.trendChart);
         if (!this.trendChart) return;
 
+        const tc = Utils.themeColors();
+
         const years = history.map(rec => rec[0]);
         const mscores = history.map(rec => rec[1]);
         const scores = history.map(rec => rec[10]);
@@ -215,7 +217,7 @@ const CompanyModule = {
                     min: 0,
                     max: 100,
                     position: 'right',
-                    splitLine: { lineStyle: { color: '#21262d' } }
+                    splitLine: { lineStyle: { color: tc.splitLineAlt } }
                 }
             ],
             series: [
@@ -252,6 +254,7 @@ const CompanyModule = {
         this.radarChart = Utils.createChart(chartDom, this.radarChart);
         if (!this.radarChart) return;
 
+        const tc = Utils.themeColors();
         const indMeans = INDUSTRY_FACTORS[indcd] ? INDUSTRY_FACTORS[indcd].means : null;
 
         const indicators = [
@@ -298,14 +301,14 @@ const CompanyModule = {
         const option = {
             tooltip: {
                 trigger: 'item',
-                backgroundColor: '#161b22',
-                borderColor: '#30363d',
-                textStyle: { color: '#e6edf3' }
+                backgroundColor: tc.tooltipBg,
+                borderColor: tc.tooltipBorder,
+                textStyle: { color: tc.textLight }
             },
             legend: {
                 bottom: 0,
                 left: 'center',
-                textStyle: { color: '#8b949e', fontSize: 10 }
+                textStyle: { color: tc.textSecondary, fontSize: 10 }
             },
             radar: {
                 indicator: indicators,
@@ -314,16 +317,16 @@ const CompanyModule = {
                 shape: 'polygon',
                 splitNumber: 4,
                 axisName: {
-                    color: '#8b949e',
+                    color: tc.textSecondary,
                     fontSize: 9
                 },
                 splitLine: {
-                    lineStyle: { color: 'rgba(48, 54, 61, 0.5)' }
+                    lineStyle: { color: tc.radarLine }
                 },
                 splitArea: {
                     show: true,
                     areaStyle: {
-                        color: ['rgba(22, 27, 34, 0.2)', 'rgba(10, 14, 20, 0.4)']
+                        color: [tc.radarArea1, tc.radarArea2]
                     }
                 }
             },

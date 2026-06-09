@@ -172,6 +172,8 @@ const CrisisModule = {
         this.scatterChart = Utils.createChart(chartDom, this.scatterChart);
         if (!this.scatterChart) return;
 
+        const tc = Utils.themeColors();
+
         // 数据按照行业门类进行分组，方便在图例中分类和不同颜色显示
         const sectors = [...new Set(CRISIS_COMPANIES.map(d => d.sector))].sort();
         const series = [];
@@ -211,9 +213,9 @@ const CrisisModule = {
                             return param.data[2]; // 悬浮高亮显示简称
                         },
                         position: 'top',
-                        color: '#f0f3f6',
+                        color: tc.scatterText,
                         fontSize: 10,
-                        backgroundColor: 'rgba(10, 14, 20, 0.8)',
+                        backgroundColor: tc.scatterLabel,
                         padding: [2, 4],
                         borderRadius: 2
                     }
@@ -235,8 +237,8 @@ const CrisisModule = {
                 containLabel: true
             },
             tooltip: {
-                backgroundColor: '#161b22',
-                borderColor: '#30363d',
+                backgroundColor: tc.tooltipBg,
+                borderColor: tc.tooltipBorder,
                 borderWidth: 1,
                 formatter: function (obj) {
                     const data = obj.data;
@@ -254,9 +256,9 @@ const CrisisModule = {
                 orient: 'vertical',
                 right: '1%',
                 top: 'center',
-                textStyle: { color: '#8b949e', fontSize: 10 },
-                pageIconColor: '#58a6ff',
-                pageTextStyle: { color: '#8b949e' }
+                textStyle: { color: tc.textSecondary, fontSize: 10 },
+                pageIconColor: tc.textSecondary,
+                pageTextStyle: { color: tc.textSecondary }
             },
             xAxis: {
                 name: '平均营收增长率 (%)',

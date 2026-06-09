@@ -23,6 +23,8 @@ const RiskModule = {
         this.heatmapChart = Utils.createChart(chartDom, this.heatmapChart);
         if (!this.heatmapChart) return;
 
+        const tc = Utils.themeColors();
+
         const sectors = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
         const sectorNames = sectors.map(code => SECTOR_NAME_MAP[code] || code);
         const years = Array.from({length: 15}, (_, i) => 2010 + i); // 2010 to 2024
@@ -107,7 +109,7 @@ const RiskModule = {
                 inRange: {
                     color: ['#3fb950', '#d29922', '#db6d28', '#f85149']
                 },
-                textStyle: { color: '#8b949e', fontSize: 10 }
+                textStyle: { color: tc.textSecondary, fontSize: 10 }
             },
             series: [
                 {

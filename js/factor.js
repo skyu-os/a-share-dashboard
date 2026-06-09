@@ -41,6 +41,8 @@ const FactorModule = {
         this.distributionChart = Utils.createChart(chartDom, this.distributionChart);
         if (!this.distributionChart) return;
 
+        const tc = Utils.themeColors();
+
         // 收集 2024 年全市场的对应因子值
         const values = [];
         const latestYear = SCREENING_SUMMARY.latest_year;
@@ -113,7 +115,7 @@ const FactorModule = {
             yAxis: {
                 type: 'value',
                 name: '企业数 (家)',
-                splitLine: { lineStyle: { color: '#21262d' } }
+                splitLine: { lineStyle: { color: tc.splitLineAlt } }
             },
             series: [
                 {
@@ -153,6 +155,8 @@ const FactorModule = {
 
         this.corrChart = Utils.createChart(chartDom, this.corrChart);
         if (!this.corrChart) return;
+
+        const tc = Utils.themeColors();
 
         const factorNames = ['DSRI', 'GMI', 'AQI', 'SGI', 'DEPI', 'SGAI', 'LVGI', 'TATA'];
 
@@ -201,10 +205,10 @@ const FactorModule = {
                 bottom: '0%',
                 text: ['正相关', '负相关'],
                 inRange: {
-                    // 发散色阶 (蓝 -> 黑 -> 红)
-                    color: ['#58a6ff', '#161b22', '#f85149']
+                    // 发散色阶 (蓝 -> 中性 -> 红)
+                    color: ['#58a6ff', tc.corrMid, '#f85149']
                 },
-                textStyle: { color: '#8b949e', fontSize: 10 }
+                textStyle: { color: tc.textSecondary, fontSize: 10 }
             },
             series: [
                 {
