@@ -18,15 +18,21 @@ const BenchmarkModule = {
         profit: ['roe', 'roa', 'asset_turnover'],
         growth: ['revenue_cagr3', 'profit_cagr3', 'asset_growth'],
         risk: ['mscore'],
-        scale: ['revenue', 'total_assets', 'cr5']
+        scale: ['revenue', 'total_assets', 'cr5'],
+        market: ['pe_median', 'mcap_median', 'turnover_avg']
     },
 
     // 指标中文标签
     metricLabels: {
         composite: '综合分位', roe: 'ROE%', roa: 'ROA%', asset_turnover: '周转率',
         revenue_cagr3: '营收CAGR%', profit_cagr3: '净利CAGR%', asset_growth: '资产增速%',
-        mscore: 'M-Score', revenue: '营收(亿)', total_assets: '总资产(亿)', cr5: 'CR5%'
+        mscore: 'M-Score', revenue: '营收(亿)', total_assets: '总资产(亿)', cr5: 'CR5%',
+        pe_median: 'PE中位', mcap_median: '市值中位(亿)', turnover_avg: '换手率%'
     },
+
+    // TDX 市场数据加载状态
+    marketDataReady: typeof INDUSTRY_MARKET_DATA !== 'undefined',
+    marketLoadAttempted: false,
 
     // ========== 初始化入口 ==========
     init() {
@@ -137,7 +143,12 @@ const BenchmarkModule = {
             metrics.forEach((metric, colIdx) => {
                 let value = null;
 
-                if (metric === 'composite') {
+                // 市场维度：从 INDUSTRY_MARKET_DATA 读取
+                if (this.activeDim === 'market' && this.marketDataReady) {
+                    value = this._getMarketValueForL1(l1Code, metric);
+                } else if (this.activeDim === 'market' && !this.marketDataReady) {
+                    value = null;
+                } else if (metric === 'composite') {
                     // 综合分位：取该行业所有可用中位数的均值
                     const meds = info.medians;
                     const vals = Object.values(meds).filter(v => v !== null && v !== undefined);
@@ -369,6 +380,7 @@ const BenchmarkModule = {
                 let val = null;
                 if (mk === 'cr5') val = r.info.concentration_cr5;
                 else if (mk === 'composite') val = r.sortVal;
+                else if (dim === 'market') val = this._getMarketValue(mk, r.code);
                 else val = r.meds[mk];
                 if (val != null) {
                     html += '<td class="' + this.dimColor(val) + '">' + parseFloat(val.toFixed(1)) + '</td>';
@@ -664,6 +676,52 @@ const BenchmarkModule = {
         if (val >= 25) return 'perc-mid';
         return 'perc-low';
     }
+    // ========== 市场维度辅助方法 (TDX MCP) ==========
+
+    /**
+     * 从 INDUSTRY_MARKET_DATA 获取 L1 级别的市场聚合值
+     * 通过匹配 L2 行业名找到所属 L1，聚合所有命中项的均值
+     */
+    _getMarketValueForL1(l1Code, metric) {
+        if (!this.marketDataReady || !INDUSTRY_MARKET_DATA) return null;
+        const l2Map = (INDUSTRY_HIERARCHY[l1Code] || {}).level2 || {};
+        const vals = [];
+        Object.keys(l2Map).forEach(l2Code => {
+            const l2Info = INDUSTRY_L2_BENCHMARK[l2Code];
+            if (!l2Info) return;
+            const mkt = this._matchMarketData(l2Info.name);
+            if (mkt && mkt[metric] != null) vals.push(mkt[metric]);
+        });
+        if (vals.length === 0) return null;
+        return vals.reduce((a, b) => a + b, 0) / vals.length;
+    },
+
+    /**
+     * 根据申万行业名匹配 INDUSTRY_MARKET_DATA 条目
+     * 做宽松匹配：去空格、去后缀(如Ⅱ)
+     */
+    _matchMarketData(industryName) {
+        if (!industryName || !this.marketDataReady) return null;
+        const clean = industryName.replace(/Ⅱ|Ⅲ|Ⅳ|2|3|4/g, '').replace(/\s+/g, '');
+        for (const key in INDUSTRY_MARKET_DATA) {
+            if (key.replace(/\s+/g, '') === clean || clean.includes(key) || key.includes(clean)) {
+                return INDUSTRY_MARKET_DATA[key];
+            }
+        }
+        return null;
+    },
+
+    /**
+     * 获取 L2 行业的市场指标值
+     */
+    _getMarketValue(metric, l2Code) {
+        if (!this.marketDataReady || !INDUSTRY_MARKET_DATA) return null;
+        const l2Info = INDUSTRY_L2_BENCHMARK[l2Code];
+        if (!l2Info) return null;
+        const mkt = this._matchMarketData(l2Info.name);
+        return mkt ? (mkt[metric] || null) : null;
+    },
+
 };
 
 // ========== 键盘导航：Escape 逐级返回 ==========
