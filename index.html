@@ -25,6 +25,7 @@
         <nav class="nav-tabs">
             <a href="#overview" class="nav-tab active" data-tab="overview">指挥中心</a>
             <a href="#industry" class="nav-tab" data-tab="industry">行业透视</a>
+            <a href="#benchmark" class="nav-tab" data-tab="benchmark">行业对标</a>
             <a href="#crisis" class="nav-tab" data-tab="crisis">危机穿越</a>
             <a href="#risk" class="nav-tab" data-tab="risk">风险预警</a>
             <a href="#factor" class="nav-tab" data-tab="factor">因子分解</a>
@@ -686,6 +687,78 @@
             </div>
         </section>
 
+        <!-- 行业对标 (Industry Benchmarking) -->
+        <section id="benchmark-tab" class="tab-content">
+
+            <!-- 面包屑导航 -->
+            <div class="benchmark-breadcrumb" id="benchmark-breadcrumb">
+                <span class="crumb active" data-level="l1">全行业</span>
+                <span class="crumb-sep hidden" data-level="sep1">›</span>
+                <span class="crumb hidden" data-level="l2">--</span>
+                <span class="crumb-sep hidden" data-level="sep2">›</span>
+                <span class="crumb hidden" data-level="company">--</span>
+            </div>
+
+            <!-- 维度切换工具栏 -->
+            <div class="toolbar benchmark-toolbar">
+                <div class="toolbar-label">对标维度</div>
+                <div class="toolbar-select-area">
+                    <button class="btn btn-active" data-dim="composite">综合得分</button>
+                    <button class="btn" data-dim="profit">盈利能力</button>
+                    <button class="btn" data-dim="growth">成长性</button>
+                    <button class="btn" data-dim="risk">风险质量</button>
+                    <button class="btn" data-dim="scale">规模分布</button>
+                </div>
+                <div class="toolbar-select-area" style="margin-left:auto;">
+                    <select class="custom-select" id="l2-view-mode">
+                        <option value="table">表格模式</option>
+                        <option value="radar">雷达模式</option>
+                    </select>
+                    <select class="custom-select" id="company-top-n">
+                        <option value="20">Top 20</option>
+                        <option value="50">Top 50</option>
+                        <option value="100">Top 100</option>
+                        <option value="all">全部</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 三栏容器 -->
+            <div class="benchmark-grid">
+                <!-- 左栏：一级行业热力图 -->
+                <div class="card benchmark-panel-l1">
+                    <div class="card-title">
+                        <span>一级行业门类</span>
+                        <span>颜色=分位值 绿高红低</span>
+                    </div>
+                    <div class="chart-container" id="benchmark-heatmap"></div>
+                </div>
+
+                <!-- 中栏：二级细分对比 -->
+                <div class="card benchmark-panel-l2">
+                    <div class="card-title" id="benchmark-l2-title">二级细分对比 — 全部行业</div>
+                    <div class="table-wrapper" style="max-height: 500px;" id="benchmark-l2-table-wrapper">
+                        <table class="custom-table" id="benchmark-l2-table">
+                            <thead id="benchmark-l2-thead"></thead>
+                            <tbody id="benchmark-l2-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div class="chart-container hidden" id="benchmark-l2-radar"></div>
+                </div>
+
+                <!-- 右栏：个股分位排名 -->
+                <div class="card benchmark-panel-company">
+                    <div class="card-title" id="benchmark-company-title">个股分位排名 — 请先选择行业</div>
+                    <div class="table-wrapper" style="max-height: 500px;" id="benchmark-company-wrapper">
+                        <table class="custom-table" id="benchmark-company-table">
+                            <thead id="benchmark-company-thead"></thead>
+                            <tbody id="benchmark-company-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- 右侧滑出个股诊断抽屉面板 (Drawer Pattern) -->
@@ -765,6 +838,7 @@
     <script src="js/company.js"></script>
     <script src="js/screener.js"></script>
     <script src="js/watchlist.js"></script>
+    <script src="js/benchmark.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

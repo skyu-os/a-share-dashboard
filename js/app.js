@@ -98,6 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'watchlist':
                 if (typeof WatchlistModule !== 'undefined') WatchlistModule.init();
                 break;
+            case 'benchmark':
+                if (typeof BenchmarkModule !== 'undefined') BenchmarkModule.init();
+                break;
             case 'company':
                 if (typeof CompanyModule !== 'undefined') CompanyModule.initSearchPage();
                 break;

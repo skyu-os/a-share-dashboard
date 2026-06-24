@@ -1882,3 +1882,98 @@ body {
     .nav-brand h1 { font-size: 13px; }
     .nav-brand span { display: none; }
 }
+
+/* ===== 行业对标 Benchmark Tab ===== */
+
+/* 面包屑导航 */
+.benchmark-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 20px;
+    margin-bottom: 12px;
+    background: var(--card-bg, #1a1f2e);
+    border-radius: 8px;
+    font-size: 13px;
+}
+.benchmark-breadcrumb .crumb {
+    cursor: pointer;
+    color: var(--text-muted, #7f8da6);
+    transition: color 0.15s;
+}
+.benchmark-breadcrumb .crumb:hover { color: var(--accent, #58a6ff); }
+.benchmark-breadcrumb .crumb.active {
+    color: var(--text-body, #f0f3f6);
+    font-weight: 600;
+}
+.benchmark-breadcrumb .crumb.hidden { display: none; }
+.benchmark-breadcrumb .crumb-sep {
+    color: var(--text-muted, #7f8da6);
+    margin: 0 2px;
+}
+.benchmark-breadcrumb .crumb-sep.hidden { display: none; }
+
+/* 三栏网格布局 */
+.benchmark-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr 1fr;
+    gap: 12px;
+    min-height: 520px;
+}
+.benchmark-panel-l1 { min-width: 260px; }
+.benchmark-panel-l2 { min-width: 340px; }
+.benchmark-panel-company { min-width: 300px; }
+
+/* 图表容器 */
+#benchmark-heatmap { height: 480px; }
+#benchmark-l2-radar { height: 380px; }
+
+/* 维度按钮激活态 */
+.benchmark-toolbar .btn-active {
+    background: var(--accent, #58a6ff);
+    color: #fff;
+    border-color: var(--accent, #58a6ff);
+}
+
+/* 表格行选中态 */
+#benchmark-l2-tbody tr.selected,
+#benchmark-company-tbody tr.selected {
+    background: var(--accent-bg, rgba(88, 166, 255, 0.08));
+    border-left: 3px solid var(--accent, #58a6ff);
+}
+#benchmark-l2-tbody tr,
+#benchmark-company-tbody tr {
+    cursor: pointer;
+    transition: background 0.12s;
+}
+#benchmark-l2-tbody tr:hover,
+#benchmark-company-tbody tr:hover {
+    background: var(--hover-bg, rgba(255,255,255,0.04));
+}
+
+/* 分位值颜色编码 */
+.perc-high  { color: #22c55e; font-weight: 600; }  /* >= 75% */
+.perc-mid   { color: #eab308; }                      /* 25%-75% */
+.perc-low   { color: #ef4444; }                      /* < 25% */
+.perc-na    { color: var(--text-muted, #64748b); }   /* N/A */
+
+/* 视图模式切换 */
+#benchmark-l2-radar.hidden { display: none; }
+#benchmark-l2-table-wrapper.hidden { display: none; }
+
+/* 工具栏自定义选择器间距 */
+.benchmark-toolbar .custom-select {
+    margin-left: 8px;
+}
+
+/* 响应式：屏幕宽度小于1200px时三栏堆叠为单列 */
+@media (max-width: 1200px) {
+    .benchmark-grid {
+        grid-template-columns: 1fr;
+    }
+    .benchmark-panel-l1,
+    .benchmark-panel-l2,
+    .benchmark-panel-company {
+        min-width: 0;
+    }
+}
