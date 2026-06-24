@@ -26,6 +26,7 @@
             <a href="#overview" class="nav-tab active" data-tab="overview">指挥中心</a>
             <a href="#industry" class="nav-tab" data-tab="industry">行业透视</a>
             <a href="#benchmark" class="nav-tab" data-tab="benchmark">行业对标</a>
+            <a href="#rd" class="nav-tab" data-tab="rd">研发竞争力</a>
             <a href="#crisis" class="nav-tab" data-tab="crisis">危机穿越</a>
             <a href="#risk" class="nav-tab" data-tab="risk">风险预警</a>
             <a href="#factor" class="nav-tab" data-tab="factor">因子分解</a>
@@ -760,6 +761,63 @@
             </div>
         </section>
 
+        <!-- 研发竞争力 (R&D Competitiveness) -->
+        <section id="rd-tab" class="tab-content">
+
+            <!-- 控制面板 + 双栏 -->
+            <div class="benchmark-grid rd-grid">
+                <!-- 左栏：控制面板 250px -->
+                <div class="card rd-panel-control">
+                    <div class="card-title"><span>行业组</span></div>
+                    <div class="rd-group-buttons" id="rd-group-buttons">
+                        <!-- JS 渲染 -->
+                    </div>
+                    <div class="card-title" style="margin-top:16px;"><span>维度权重</span></div>
+                    <div class="rd-weight-sliders" id="rd-weight-sliders">
+                        <!-- JS 渲染 7 滑块 -->
+                    </div>
+                    <div class="card-title" style="margin-top:16px;"><span>年份</span></div>
+                    <select class="custom-select" id="rd-year-select"></select>
+                    <div class="rd-moat-coverage" id="rd-moat-coverage" style="margin-top:16px;">
+                        <!-- JS 渲染研究覆盖度 -->
+                    </div>
+                </div>
+
+                <!-- 中栏：评分榜单 -->
+                <div class="card rd-panel-ranking">
+                    <div class="card-title">
+                        <span id="rd-ranking-title">研发竞争力排名 — 全部</span>
+                        <select class="custom-select" id="rd-top-n" style="margin-left:auto;">
+                            <option value="20">Top 20</option>
+                            <option value="50">Top 50</option>
+                            <option value="100">Top 100</option>
+                        </select>
+                    </div>
+                    <div class="chart-container-lg" id="rd-bar-chart"></div>
+                </div>
+
+                <!-- 右栏：公司详情 + 护城河 -->
+                <div class="card rd-panel-detail">
+                    <div class="card-title" id="rd-detail-title">公司详情 — 请点击左侧榜单</div>
+                    <div class="chart-container" id="rd-radar-chart" style="height:240px;"></div>
+                    <div class="chart-container" id="rd-trend-chart" style="height:180px;"></div>
+                    <div class="rd-moat-section" id="rd-moat-section">
+                        <!-- JS 渲染护城河笔记 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部：行业研发强度热力图 -->
+            <div class="card rd-heatmap-card">
+                <div class="card-title">
+                    <span>行业研发强度年度变化</span>
+                    <span>颜色深浅 = 研发费用/营业收入 中位数 (%)</span>
+                </div>
+                <div class="chart-container" id="rd-heatmap-chart" style="height:360px;"></div>
+            </div>
+
+        </section>
+
     </main>
 
     <!-- 右侧滑出个股诊断抽屉面板 (Drawer Pattern) -->
@@ -841,6 +899,8 @@
     <script src="js/watchlist.js"></script>
     <script src="market_data.js"></script>
     <script src="js/benchmark.js"></script>
+    <script src="js/rd.js"></script>
+    <script src="js/moat.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

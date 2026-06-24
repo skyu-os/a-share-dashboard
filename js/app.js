@@ -101,6 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'benchmark':
                 if (typeof BenchmarkModule !== 'undefined') BenchmarkModule.init();
                 break;
+            case 'rd':
+                if (typeof RDModule !== 'undefined') RDModule.init();
+                break;
             case 'company':
                 if (typeof CompanyModule !== 'undefined') CompanyModule.initSearchPage();
                 break;

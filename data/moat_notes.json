@@ -1,0 +1,5 @@
+{
+  "_description": "护城河评级数据 - 人工标注的技术护城河评价",
+  "_schema": "barrier_level(1-5), irreplaceability(1-5), evidence(bool flags), chain_position, obsidian_links, notes",
+  "entries": {}
+}
