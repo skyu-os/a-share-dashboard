@@ -597,6 +597,378 @@ def main():
 
     print(f"  计算完成 {len(l1_benchmark)} 个一级行业基准")
 
+    # ==========================================
+    # 研发竞争力 (R&D Competitiveness) 数据管线
+    # ==========================================
+
+    # -- 5.6 R&D metrics: raw extraction --
+    print("提取研发费用数据...")
+    # xlsx 可能在本地路径而非 data/ 目录
+    _xlsx_local = r"e:\A股上市公司财务数据合集\上市公司财务年度合并90-24.xlsx"
+    _xlsx_repo = os.path.join(WORKSPACE_DIR, '上市公司财务年度合并90-24.xlsx')
+    _xlsx_path = _xlsx_repo if os.path.isfile(_xlsx_repo) else _xlsx_local
+    if not os.path.isfile(_xlsx_path):
+        print("  WARNING: xlsx 文件未找到，跳过 R&D 管线")
+        RD_SCORES = {}
+        RD_HISTORY = {}
+        INDUSTRY_RD_BENCHMARK = {}
+        INDUSTRY_GROUPS = {}
+        DEFAULT_WEIGHTS = {}
+    else:
+        df_raw = pd.read_excel(_xlsx_path,
+            usecols=['Stkcd', 'Accper', 'B001216000', 'A001219000', 'A001218000',
+                     'B001101000', 'A001000000', 'B001201000', 'B001209000'])
+        # 过滤掉 xlsx 首行的中文列标题行（Stkcd 非数字的行）
+        df_raw = df_raw[df_raw['Stkcd'].astype(str).str.match(r'^\d+$')].copy()
+        df_raw.columns = ['stkcd', 'year', 'rd_expense', 'dev_expenditure',
+                          'intangible_assets', 'revenue', 'total_assets',
+                          'cost_of_revenue', 'selling_expense']
+        df_raw['stkcd'] = df_raw['stkcd'].astype(str).str.zfill(6)
+        # Accper 已是 datetime，直接取年份
+        df_raw['year'] = pd.to_datetime(df_raw['year']).dt.year
+        # 仅保留 2018 年以后（研发费用字段自 2018 年起可用）
+        df_raw = df_raw[df_raw['year'] >= 2018].copy()
+        print(f"  {df_raw['stkcd'].nunique()} 家公司，{len(df_raw)} 条记录")
+
+        # 合并 industry 信息（两边 Stkcd 均 zfill 对齐）
+        _screen_info = df_screen[['Stkcd', 'Indcd', 'Indnme']].drop_duplicates(subset='Stkcd').copy()
+        _screen_info['_key'] = _screen_info['Stkcd'].astype(str).str.zfill(6)
+        df_raw = df_raw.merge(
+            _screen_info[['_key', 'Indcd', 'Indnme']],
+            left_on='stkcd', right_on='_key', how='left'
+        )
+        df_raw.drop(columns=['_key'], inplace=True)
+
+        # 标记金融业（Indcd 首字母 J 或 Indnme 含金融关键词）
+        _is_financial = pd.Series(False, index=df_raw.index)
+        if 'Indcd' in df_raw.columns:
+            _is_financial |= df_raw['Indcd'].astype(str).str.match(r'^J')
+        if 'Indnme' in df_raw.columns:
+            for _kw in ['银行', '证券', '保险', '金融', '信托', '期货']:
+                _is_financial |= df_raw['Indnme'].fillna('').str.contains(_kw, regex=False)
+        df_raw['rd_applicable'] = ~_is_financial
+
+        latest_year = int(df_raw['year'].max())
+
+        def _calc_cagr_3y(group, col, latest_year):
+            """3年复合增长率，降级：3→2→1"""
+            late = group[group['year'] == latest_year]
+            if len(late) == 0:
+                return None
+            late_val = late[col].values[0]
+            if pd.isna(late_val) or late_val == 0:
+                return None
+            for yb in range(3, 0, -1):
+                early = group[group['year'] == latest_year - yb]
+                if len(early) == 0:
+                    continue
+                early_val = early[col].values[0]
+                if pd.isna(early_val) or early_val == 0:
+                    continue
+                if late_val / early_val <= 0:
+                    continue
+                return float((late_val / early_val) ** (1.0 / yb) - 1) * 100
+            return None
+
+        # 预建 name lookup（zfill 对齐）
+        _name_lookup = {}
+        _sn_unique = df_screen[['Stkcd', 'ShortName']].drop_duplicates(subset='Stkcd')
+        for _, _r in _sn_unique.iterrows():
+            _name_lookup[str(_r['Stkcd']).zfill(6)] = str(_r['ShortName'])
+
+        # -- 5.6.1 公司级 7 指标计算 --
+        company_rd_metrics = {}
+        for stkcd, group in df_raw.groupby('stkcd'):
+            group = group.sort_values('year')
+            latest = group[group['year'] == latest_year]
+            if len(latest) == 0:
+                continue
+            latest = latest.iloc[0]
+            rd_applicable = bool(latest.get('rd_applicable', True))
+            if not rd_applicable:
+                company_rd_metrics[stkcd] = {'rd_applicable': False}
+                continue
+
+            rd_exp = latest['rd_expense']
+            rev = latest['revenue']
+            rd_intensity = (rd_exp / rev * 100) if pd.notna(rd_exp) and pd.notna(rev) and rev > 0 else None
+
+            rd_cagr = _calc_cagr_3y(group, 'rd_expense', latest_year)
+            rev_cagr = _calc_cagr_3y(group, 'revenue', latest_year)
+            efficiency = (rev_cagr / rd_cagr) if (pd.notna(rd_cagr) and pd.notna(rev_cagr) and rd_cagr != 0) else None
+            if efficiency is not None:
+                efficiency = max(0.0, min(float(efficiency), 3.0))
+
+            # 资本化率
+            dev_exp = latest['dev_expenditure']
+            cap_rate = None
+            if pd.notna(rd_exp) and pd.notna(dev_exp):
+                denom = rd_exp + dev_exp
+                if denom > 0:
+                    cap_rate = dev_exp / denom
+
+            # 持续性
+            years_with_rd = group[group['rd_expense'].notna() & (group['rd_expense'] > 0)].shape[0]
+            total_years = group.shape[0]
+            persistence = years_with_rd / total_years if total_years > 0 else 0
+
+            # 定价权代理（毛利率）
+            gross_margins = []
+            for _, row in group.iterrows():
+                rev_r = row['revenue']
+                cost_r = row['cost_of_revenue']
+                if pd.notna(rev_r) and pd.notna(cost_r) and rev_r > 0:
+                    gm = (rev_r - cost_r) / rev_r
+                    if 0 <= gm <= 1:
+                        gross_margins.append(gm)
+            gm_mean = np.mean(gross_margins) if gross_margins else None
+            gm_cv = np.std(gross_margins) / gm_mean if (gross_margins and gm_mean and gm_mean > 0) else None
+            pricing_power = gm_mean * (1 - gm_cv) if (gm_mean is not None and gm_cv is not None) else None
+
+            # 无形资产集中度
+            intang = latest['intangible_assets']
+            ta = latest['total_assets']
+            intang_ratio = (intang / ta) if pd.notna(intang) and pd.notna(ta) and ta > 0 else None
+
+            # 研发费用 YoY 变化（供排雷标记）
+            rd_prev = None
+            prev_year_rows = group[group['year'] == latest_year - 1]
+            if len(prev_year_rows) > 0:
+                rd_prev = prev_year_rows.iloc[0]['rd_expense']
+            rd_yoy_change = None
+            if rd_prev is not None and rd_prev != 0 and rd_exp is not None:
+                rd_yoy_change = (rd_exp - rd_prev) / rd_prev
+
+            company_rd_metrics[stkcd] = {
+                'rd_applicable': True,
+                'rd_intensity': float(rd_intensity) if pd.notna(rd_intensity) else None,
+                'rd_cagr': float(rd_cagr) if pd.notna(rd_cagr) else None,
+                'cap_rate': float(cap_rate) if cap_rate is not None else None,
+                'persistence': float(persistence),
+                'efficiency': float(efficiency) if efficiency is not None else None,
+                'pricing_power': float(pricing_power) if pricing_power is not None else None,
+                'intang_ratio': float(intang_ratio) if intang_ratio is not None else None,
+                'rd_yoy_change': float(rd_yoy_change) if rd_yoy_change is not None else None,
+                'rd_prev': float(rd_prev) if pd.notna(rd_prev) else None,
+                'rd_exp': float(rd_exp) if pd.notna(rd_exp) else None,
+                'effective_years': int(total_years),
+                'name': _name_lookup.get(stkcd, stkcd)
+            }
+
+        print(f"  计算完成 {sum(1 for v in company_rd_metrics.values() if v.get('rd_applicable', True))} 家适用公司指标")
+
+        # -- 5.6.2 行业组定义与归一化 --
+        INDUSTRY_GROUPS = {
+            'all': {'name': '全部', 'industries': None},
+            'hardware': {'name': '硬件与设备', 'industries': [
+                '计算机', '通信', '电子设备', '电气机械', '器材制造',
+                '半导体', '消费电子', '光学', '光电子', '元件'
+            ]},
+            'software': {'name': '软件与服务', 'industries': [
+                '软件', '信息技术', '互联网', '电信', '广播电视', '影视',
+                'IT服务', '数字媒体', '游戏'
+            ]},
+            'manufacturing': {'name': '高端制造', 'industries': [
+                '汽车', '铁路', '船舶', '航空航天', '专用设备', '通用设备',
+                '自动化', '仪器仪表', '电池', '光伏', '风电'
+            ]},
+            'materials': {'name': '材料与基础', 'industries': [
+                '化学原料', '化学制品', '化学纤维', '非金属矿物',
+                '金属制品', '有色金属', '黑色金属', '橡胶', '塑料',
+                '金属新材料', '电子化学品'
+            ]},
+        }
+
+        def _match_group(indnme):
+            for gk, gv in INDUSTRY_GROUPS.items():
+                if gk == 'all':
+                    continue
+                for kw in gv['industries']:
+                    if kw in str(indnme):
+                        return gk
+            return 'other'
+
+        # 预建 Indnme lookup（避免循环内重复 filter）
+        _indnme_lookup = {}
+        _sn_tmp = df_screen[['Stkcd', 'Indnme']].drop_duplicates(subset='Stkcd')
+        for _, _r in _sn_tmp.iterrows():
+            _indnme_lookup[str(_r['Stkcd']).zfill(6)] = str(_r['Indnme'])
+
+        stkcd_group = {}
+        for stkcd, metrics in company_rd_metrics.items():
+            if not metrics.get('rd_applicable', True):
+                stkcd_group[stkcd] = None
+                continue
+            indnme = _indnme_lookup.get(stkcd, '')
+            stkcd_group[stkcd] = _match_group(indnme) if indnme else 'other'
+
+        DIMS = ['rd_intensity', 'rd_cagr', 'cap_rate', 'persistence', 'efficiency', 'pricing_power', 'intang_ratio']
+
+        def _calc_percentile(values):
+            """计算数组中每个值的分位数（0-100），NaN 返回 None"""
+            valid = [(i, v) for i, v in enumerate(values) if v is not None]
+            if not valid:
+                return [None] * len(values)
+            sorted_vals = sorted(v[1] for v in valid)
+            n = len(sorted_vals)
+            result = [None] * len(values)
+            for i, v in enumerate(values):
+                if v is None:
+                    continue
+                lo, hi = 0, n - 1
+                while lo <= hi:
+                    mid = (lo + hi) // 2
+                    if sorted_vals[mid] < v:
+                        lo = mid + 1
+                    else:
+                        hi = mid - 1
+                result[i] = round(lo / n * 100, 1)
+            return result
+
+        # 按组分批归一化 — 同时记录各组资本化中位数
+        group_cap_medians = {}
+        for group_name in set(stkcd_group.values()):
+            if group_name is None:
+                continue
+            members = [s for s, g in stkcd_group.items() if g == group_name]
+            for dim in DIMS:
+                vals = [company_rd_metrics[s].get(dim) for s in members if s in company_rd_metrics]
+                actual_members = [s for s in members if s in company_rd_metrics]
+                percentiles = _calc_percentile(vals)
+                for s, p in zip(actual_members, percentiles):
+                    company_rd_metrics[s][f'{dim}_pct'] = p
+            # 计算行业中位数（用于资本化健康度）
+            all_cap_rates = [v for s in members
+                             if (v := company_rd_metrics[s].get('cap_rate')) is not None
+                             and s in company_rd_metrics]
+            median_cap = float(np.median(all_cap_rates)) if all_cap_rates else 0.0
+            group_cap_medians[group_name] = median_cap
+            for s in members:
+                if s in company_rd_metrics:
+                    cap = company_rd_metrics[s].get('cap_rate')
+                    if cap is not None and median_cap > 0:
+                        dev = abs(cap - median_cap) / median_cap
+                        company_rd_metrics[s]['cap_health'] = round(max(0.0, min(1.0, 1 - dev)) * 100, 1)
+                    elif cap is not None and median_cap == 0:
+                        company_rd_metrics[s]['cap_health'] = 100.0
+                    else:
+                        company_rd_metrics[s]['cap_health'] = None
+
+        # -- 5.6.3 综合评分与排雷标记 --
+        DEFAULT_WEIGHTS = {
+            'rd_intensity': 25, 'rd_cagr': 20, 'cap_rate': 15,
+            'persistence': 15, 'efficiency': 10, 'pricing_power': 8, 'intang_ratio': 7
+        }
+
+        RD_SCORES = {}
+        for stkcd, m in company_rd_metrics.items():
+            if not m.get('rd_applicable', True):
+                RD_SCORES[stkcd] = {
+                    'rd_applicable': False, 'score': None, 'year': latest_year,
+                    'dimensions': {}, 'flags': []
+                }
+                continue
+
+            score = 0
+            dims_out = {}
+            flags = []
+            total_w = 0
+
+            if m['effective_years'] < 2:
+                flags.append('insufficient_data')
+
+            for dim in DIMS:
+                if dim == 'cap_rate':
+                    val = m.get('cap_health')
+                else:
+                    val = m.get(f'{dim}_pct')
+                w = DEFAULT_WEIGHTS[dim]
+                if val is not None:
+                    dims_out[dim] = round(val, 1)
+                    score += val * w
+                    total_w += w
+                else:
+                    dims_out[dim] = None
+
+            score = round(score / total_w, 1) if total_w > 0 else None
+
+            # 排雷标记
+            cap_rate = m.get('cap_rate')
+            grp = stkcd_group.get(stkcd, 'other')
+            grp_median_cap = group_cap_medians.get(grp, 0)
+            if cap_rate is not None and grp_median_cap > 0 and cap_rate > grp_median_cap * 3:
+                flags.append('cap_aggressive')
+            rd_yoy = m.get('rd_yoy_change')
+            if rd_yoy is not None and rd_yoy < -0.3:
+                flags.append('rd_cliff')
+            if rd_yoy is not None and rd_yoy < -0.3 and cap_rate is not None and m.get('rd_prev') is not None and rd_yoy < 0:
+                if cap_rate > 0.3:
+                    flags.append('double_kill')
+
+            RD_SCORES[stkcd] = {
+                'rd_applicable': True,
+                'score': score,
+                'year': int(latest_year),
+                'dimensions': dims_out,
+                'flags': flags,
+                'name': m['name'],
+                'rd_intensity_raw': m.get('rd_intensity'),
+                'cap_rate_raw': m.get('cap_rate'),
+                'group': grp
+            }
+
+        print(f"  计算完成 {len(RD_SCORES)} 家公司综合评分")
+        _scored = [sc for sc in RD_SCORES.values() if sc.get('score') is not None and sc['score'] > 0]
+        print(f"  其中 {len(_scored)} 家有研发投入记录（score > 0）")
+
+        # -- 5.7 历史快照（每公司每年） --
+        RD_HISTORY = {}
+        for stkcd, group in df_raw.groupby('stkcd'):
+            metrics = company_rd_metrics.get(stkcd)
+            if not metrics or not metrics.get('rd_applicable', True):
+                continue
+            years = sorted(group['year'].unique())
+            history = []
+            for year in years:
+                yr_data = group[group['year'] == year].iloc[0]
+                rd_exp_v = yr_data['rd_expense']
+                rev_v = yr_data['revenue']
+                intensity = (rd_exp_v / rev_v * 100) if pd.notna(rd_exp_v) and pd.notna(rev_v) and rev_v > 0 else None
+                history.append({
+                    'year': int(year),
+                    'rd_expense': float(rd_exp_v) if pd.notna(rd_exp_v) else None,
+                    'rd_intensity': round(float(intensity), 2) if intensity is not None else None,
+                })
+            if history:
+                RD_HISTORY[stkcd] = history
+
+        print(f"  生成 {len(RD_HISTORY)} 家公司历史快照")
+
+        # -- 5.8 行业组基准统计 --
+        INDUSTRY_RD_BENCHMARK = {}
+        for group_name in set(stkcd_group.values()):
+            if group_name is None:
+                continue
+            members = [s for s, g in stkcd_group.items() if g == group_name and s in company_rd_metrics]
+            if not members:
+                continue
+            scores = [company_rd_metrics[s] for s in members]
+            intensity_vals = [s['rd_intensity'] for s in scores if s.get('rd_intensity') is not None]
+            intensity_vals.sort()
+            n = len(intensity_vals)
+            INDUSTRY_RD_BENCHMARK[group_name] = {
+                'name': INDUSTRY_GROUPS.get(group_name, {}).get('name', group_name),
+                'count': len(members),
+                'rd_intensity_median': round(intensity_vals[n // 2], 2) if n > 0 else None,
+                'rd_intensity_p25': round(intensity_vals[n // 4], 2) if n > 1 else None,
+                'rd_intensity_p75': round(intensity_vals[3 * n // 4], 2) if n > 3 else None,
+                'rd_intensity_mean': round(float(np.mean(intensity_vals)), 2) if intensity_vals else None,
+            }
+
+        print(f"  计算完成 {len(INDUSTRY_RD_BENCHMARK)} 个行业组基准")
+
+    print("研发竞争力数据管线完成")
+
     # 5. 输出合并后的 JS 文件
     output_js_path = os.path.join(OUTPUT_DIR, "dashboard_data.js")
     print(f"写入整合后的数据至 {output_js_path}...")
@@ -619,8 +991,16 @@ def main():
         f.write(f"const INDUSTRY_L2_BENCHMARK = {json.dumps(l2_benchmark, ensure_ascii=False)};\n\n")
         f.write(f"const COMPANY_METRICS = {json.dumps(company_metrics, ensure_ascii=False)};\n\n")
         f.write(f"const COMPANY_PERCENTILES = {json.dumps(company_percentiles, ensure_ascii=False)};\n\n")
-        f.write(f"const COMPANY_HISTORY = {json.dumps(company_history, ensure_ascii=False)};\n")
-        
+        f.write(f"const COMPANY_HISTORY = {json.dumps(company_history, ensure_ascii=False)};\n\n")
+        # 研发竞争力模块
+        f.write("// === 研发竞争力模块 (R&D Competitiveness) ===\n")
+        f.write("// 综合评分 (7维加权: 强度25% + 增速20% + 健康度15% + 持续性15% + 效率10% + 定价权8% + 无形资产7%)\n")
+        f.write(f"const RD_SCORES = {json.dumps(RD_SCORES, ensure_ascii=False)};\n")
+        f.write(f"const RD_HISTORY = {json.dumps(RD_HISTORY, ensure_ascii=False)};\n")
+        f.write(f"const INDUSTRY_RD_BENCHMARK = {json.dumps(INDUSTRY_RD_BENCHMARK, ensure_ascii=False)};\n")
+        f.write(f"const RD_INDUSTRY_GROUPS = {json.dumps({k: v for k, v in INDUSTRY_GROUPS.items() if k != 'all'}, ensure_ascii=False)};\n")
+        f.write(f"const RD_DEFAULT_WEIGHTS = {json.dumps(DEFAULT_WEIGHTS, ensure_ascii=False)};\n")
+
     print("数据预处理全部完成！")
 
 if __name__ == "__main__":
