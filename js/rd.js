@@ -35,6 +35,22 @@ const RDModule = {
         if (typeof MoatModule !== 'undefined') MoatModule.refreshCoverage();
     },
 
+    _checkDataAvailability() {
+        const total = Object.values(RD_SCORES).filter(r => r.rd_applicable).length;
+        if (total === 0) {
+            document.getElementById('rd-bar-chart').innerHTML =
+                '<div style="text-align:center;padding:40px;color:var(--text-secondary);">暂无研发数据</div>';
+            return false;
+        }
+        const current = Object.values(RD_SCORES).filter(r => r.rd_applicable && r.year === this.activeYear).length;
+        if (current === 0) {
+            document.getElementById('rd-bar-chart').innerHTML =
+                `<div style="text-align:center;padding:40px;color:var(--text-secondary);">${this.activeYear} 年暂无数据，请切换年份</div>`;
+            return false;
+        }
+        return true;
+    },
+
     renderGroupButtons() {
         const container = document.getElementById('rd-group-buttons');
         let html = '<button class="rd-group-btn active" data-group="all">全部</button>';
@@ -128,7 +144,36 @@ const RDModule = {
         const data = this.getFilteredCompanies();
         // Horizontal bar chart
         return {
-            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: { type: 'shadow' },
+                formatter: (params) => {
+                    const data = this.getFilteredCompanies();
+                    const idx = data.length - 1 - params[0].dataIndex;
+                    const item = data[idx];
+                    if (!item) return '';
+                    let html = `<strong>${item.name}</strong> (${item.stkcd || ''})<br/>`;
+                    html += `综合评分: ${item.weightedScore}<br/>`;
+                    const dimLabels = {
+                        rd_intensity: '研发强度', rd_cagr: '增速',
+                        cap_rate: '健康度', persistence: '持续性',
+                        efficiency: '效率', pricing_power: '定价权',
+                        intang_ratio: '无形资产'
+                    };
+                    for (const [dim, val] of Object.entries(item.dimensions)) {
+                        if (val != null) html += `  ${dimLabels[dim] || dim}: ${val}<br/>`;
+                    }
+                    if (item.flags.length > 0) {
+                        html += `<br/>⚠️ 排雷标记: ${item.flags.join(', ')}`;
+                    }
+                    if (typeof MoatModule !== 'undefined' && MoatModule.hasNotes(item.stkcd)) {
+                        const moat = MoatModule.getMoat(item.stkcd);
+                        if (moat.barrier_level >= 4 && moat.irreplaceability >= 4) html += '<br/>🛡️ 深护城河';
+                        else if (moat.barrier_level >= 3 || moat.irreplaceability >= 3) html += '<br/>🔒 有壁垒';
+                    }
+                    return html;
+                }
+            },
             grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
             xAxis: { type: 'value', name: '综合评分', max: 100 },
             yAxis: {
@@ -158,6 +203,7 @@ const RDModule = {
     },
 
     renderBarChart() {
+        if (!this._checkDataAvailability()) return;
         if (!this.barChart) {
             this.barChart = echarts.init(document.getElementById('rd-bar-chart'), Utils.getTheme());
         }
@@ -175,9 +221,11 @@ const RDModule = {
     showDetail(stkcd) {
         this.selectedStkcd = stkcd;
         const data = RD_SCORES[stkcd];
+        if (!data) return;
         document.getElementById('rd-detail-title').textContent = `${data.name} (${stkcd})`;
         this.renderRadar(stkcd);
         this.renderTrend(stkcd);
+        this.renderScoreHistory(stkcd);
         if (typeof MoatModule !== 'undefined') MoatModule.renderMoat(stkcd);
     },
 
@@ -221,6 +269,33 @@ const RDModule = {
                 itemStyle: { color: '#3b82f6' }
             }]
         });
+    },
+
+    computeHistoryScores(stkcd) {
+        const history = RD_HISTORY[stkcd];
+        if (!history || history.length < 1) return [];
+        return history.map(h => ({
+            year: h.year,
+            rd_intensity: h.rd_intensity,
+            rd_expense: h.rd_expense
+        }));
+    },
+
+    renderScoreHistory(stkcd) {
+        const histScores = this.computeHistoryScores(stkcd);
+        const recent = histScores.slice(-5);
+        const container = document.getElementById('rd-score-history');
+        if (!container) return;
+        if (recent.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);">暂无历史数据</div>';
+            return;
+        }
+        let html = '<table class="rd-history-table"><thead><tr><th>年份</th><th>研发强度%</th><th>研发费用(亿)</th></tr></thead><tbody>';
+        for (const row of recent) {
+            html += `<tr><td>${row.year}</td><td>${row.rd_intensity != null ? row.rd_intensity.toFixed(2) : '-'}</td><td>${row.rd_expense != null ? row.rd_expense.toFixed(2) : '-'}</td></tr>`;
+        }
+        html += '</tbody></table>';
+        container.innerHTML = html;
     },
 
     renderHeatmap() {
@@ -283,3 +358,7 @@ const RDModule = {
             .forEach(c => c?.resize());
     }
 };
+
+window.addEventListener('resize', () => {
+    if (RDModule.initialized) RDModule.resize();
+});
