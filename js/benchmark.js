@@ -69,7 +69,7 @@ const BenchmarkModule = {
         if (viewMode) {
             viewMode.addEventListener('change', () => {
                 this.l2ViewMode = viewMode.value;
-                if (this.selectedL1) this.renderL2Panel();
+                this.renderL2Panel();
             });
         }
 
@@ -262,32 +262,192 @@ const BenchmarkModule = {
 
     // ========== 二级细分面板 (中栏) ==========
     renderL2All() {
-        const thead = document.getElementById('benchmark-l2-thead');
-        const tbody = document.getElementById('benchmark-l2-tbody');
-        const title = document.getElementById('benchmark-l2-title');
-        if (title) title.textContent = '二级细分对比 — 全部行业';
-
-        if (thead) {
-            thead.innerHTML = '<tr><th>排名</th><th>行业</th><th>样本量</th><th>指标值</th></tr>';
-        }
-        if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">二级细分数据加载中 — 将在任务5实现</td></tr>';
-        }
-
-        // 隐藏雷达图，显示表格
-        const radar = document.getElementById('benchmark-l2-radar');
-        const tableWrapper = document.getElementById('benchmark-l2-table-wrapper');
-        if (radar) radar.classList.add('hidden');
-        if (tableWrapper) tableWrapper.classList.remove('hidden');
+        const allL2Codes = Object.keys(INDUSTRY_L2_BENCHMARK).sort();
+        this._renderL2Table(allL2Codes);
     },
 
     renderL2Panel() {
-        if (!this.selectedL1) {
-            this.renderL2All();
+        if (!this.selectedL1) { this.renderL2All(); return; }
+        // Get L2 codes belonging to this L1 from INDUSTRY_HIERARCHY
+        const l2Map = (INDUSTRY_HIERARCHY[this.selectedL1] || {}).level2 || {};
+        const l2Codes = Object.keys(l2Map).filter(k => INDUSTRY_L2_BENCHMARK[k]).sort();
+        this._renderL2Table(l2Codes);
+    },
+
+    // ========== L2 表格渲染 (内部) ==========
+    _renderL2Table(l2Codes) {
+        const thead = document.getElementById('benchmark-l2-thead');
+        const tbody = document.getElementById('benchmark-l2-tbody');
+        const tableW = document.getElementById('benchmark-l2-table-wrapper');
+        const radarDom = document.getElementById('benchmark-l2-radar');
+        const titleEl = document.getElementById('benchmark-l2-title');
+
+        // Update title
+        if (this.selectedL1) {
+            const l1Name = (INDUSTRY_HIERARCHY[this.selectedL1] || {}).name || this.selectedL1;
+            titleEl.textContent = '二级细分对比 — ' + l1Name;
+        } else {
+            titleEl.textContent = '二级细分对比 — 全部行业';
+        }
+
+        // Handle dual mode: table vs radar
+        if (this.l2ViewMode === 'radar' && l2Codes.length >= 2) {
+            tableW.classList.add('hidden');
+            radarDom.classList.remove('hidden');
+            this._renderL2Radar(l2Codes);
+            if (l2Codes.length === 0) return; // radar handles empty
+        } else {
+            tableW.classList.remove('hidden');
+            radarDom.classList.add('hidden');
+        }
+
+        const dim = this.activeDim;
+        const metrics = this.dimMetrics[dim];
+
+        // Build table header
+        let html = '<tr><th>排名</th><th>行业</th><th>样本</th>';
+        metrics.forEach(mk => {
+            html += '<th>' + (this.metricLabels[mk] || mk) + '</th>';
+        });
+        html += '</tr>';
+        thead.innerHTML = html;
+
+        // Handle empty
+        if (l2Codes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="' + (3 + metrics.length) + '" style="text-align:center;color:var(--text-muted);">该行业下暂无细分数据</td></tr>';
             return;
         }
-        // 占位：任务5实现实际的 L2 数据渲染
-        this.renderL2All();
+
+        // Build data rows with sort key
+        const rows = [];
+        l2Codes.forEach(code => {
+            const info = INDUSTRY_L2_BENCHMARK[code];
+            if (!info) return;
+            const meds = info.medians || {};
+
+            // Compute sort value based on active dimension
+            let sortVal = null;
+            if (dim === 'composite') {
+                // Average of all available medians as composite proxy
+                const availMedians = [];
+                ['roe', 'roa', 'revenue_cagr3', 'profit_cagr3', 'mscore', 'revenue'].forEach(mk => {
+                    if (meds[mk] != null) availMedians.push(meds[mk]);
+                });
+                sortVal = availMedians.length > 0 ? availMedians.reduce((a, b) => a + b, 0) / availMedians.length : null;
+            } else {
+                const mainMk = metrics[0];
+                sortVal = meds[mainMk];
+            }
+
+            rows.push({ code, info, meds, sortVal });
+        });
+
+        // Sort descending
+        rows.sort((a, b) => (b.sortVal || -Infinity) - (a.sortVal || -Infinity));
+
+        // Render table rows
+        html = '';
+        rows.forEach((r, idx) => {
+            const isSelected = r.code === this.selectedL2;
+            const cls = isSelected ? ' class="selected"' : '';
+            html += '<tr' + cls + ' data-l2="' + Utils.escapeHtml(r.code) + '">';
+            html += '<td>' + (idx + 1) + '</td>';
+            html += '<td>' + Utils.escapeHtml(r.info.name || r.code) + '</td>';
+            html += '<td>' + r.info.sample_size + '</td>';
+            metrics.forEach(mk => {
+                let val = null;
+                if (mk === 'cr5') val = r.info.concentration_cr5;
+                else if (mk === 'composite') val = r.sortVal;
+                else val = r.meds[mk];
+                if (val != null) {
+                    html += '<td class="' + this.dimColor(val) + '">' + parseFloat(val.toFixed(1)) + '</td>';
+                } else {
+                    html += '<td class="perc-na">--</td>';
+                }
+            });
+            html += '</tr>';
+        });
+        tbody.innerHTML = html;
+
+        // Bind click to drill into L2
+        var self = this;
+        tbody.querySelectorAll('tr').forEach(function(tr) {
+            tr.addEventListener('click', function() {
+                var l2Code = tr.getAttribute('data-l2');
+                if (l2Code) self.drillL2(l2Code);
+            });
+        });
+    },
+
+    // ========== L2 雷达图渲染 ==========
+    _renderL2Radar(l2Codes) {
+        var dom = document.getElementById('benchmark-l2-radar');
+        if (!dom) return;
+        this.radarChart = Utils.createChart(dom, this.radarChart);
+        if (!this.radarChart) return;
+
+        var tc = Utils.themeColors();
+        // Radar metrics: key financial dimensions
+        var metrics = ['roe', 'roa', 'revenue_cagr3', 'profit_cagr3', 'mscore', 'total_assets'];
+
+        // Show max 5 industries on radar
+        var displayCodes = l2Codes.slice(0, 5);
+        var indicators = metrics.map(function(mk) {
+            return { name: BenchmarkModule.metricLabels[mk] || mk, max: 100 };
+        });
+
+        var colors = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de'];
+        var seriesData = displayCodes.map(function(code, idx) {
+            var info = INDUSTRY_L2_BENCHMARK[code];
+            var meds = info ? (info.medians || {}) : {};
+            var data = metrics.map(function(mk) {
+                var v = meds[mk];
+                return v != null ? parseFloat(v.toFixed(1)) : 0;
+            });
+            return {
+                type: 'radar',
+                data: [{ value: data, name: info ? info.name : code }],
+                lineStyle: { color: colors[idx % colors.length] },
+                areaStyle: { color: colors[idx % colors.length], opacity: 0.08 },
+                symbol: 'circle',
+                symbolSize: 4
+            };
+        });
+
+        this.radarChart.setOption({
+            tooltip: { trigger: 'item' },
+            legend: {
+                data: displayCodes.map(function(c) {
+                    var info = INDUSTRY_L2_BENCHMARK[c];
+                    return info ? info.name : c;
+                }),
+                bottom: 0,
+                textStyle: { color: tc.textBody, fontSize: 11 }
+            },
+            radar: {
+                indicator: indicators,
+                axisName: { color: tc.textSecondary, fontSize: 10 },
+                splitArea: {
+                    areaStyle: { color: [tc.radarArea1 || 'rgba(22,27,34,0.3)', tc.radarArea2 || 'rgba(10,14,20,0.5)'] }
+                },
+                splitLine: { lineStyle: { color: tc.splitLine || 'rgba(56,72,112,0.12)' } },
+                axisLine: { lineStyle: { color: tc.axisLine || 'rgba(56,72,112,0.3)' } }
+            },
+            series: seriesData
+        }, true);
+    },
+
+    // ========== 下钻到二级行业 ==========
+    drillL2(l2Code) {
+        this.selectedL2 = l2Code;
+        var l2Info = INDUSTRY_L2_BENCHMARK[l2Code];
+        if (l2Info && l2Info.ind1) {
+            this.selectedL1 = l2Info.ind1;
+        }
+        this.updateBreadcrumb();
+        this.renderHeatmap();
+        this.renderL2Panel();
+        this.renderCompanyRank();
     },
 
     // ========== 个股排名 (右栏) ==========
