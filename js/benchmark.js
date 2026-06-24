@@ -33,7 +33,8 @@ const BenchmarkModule = {
         if (this.initialized) return;
         this.initialized = true;
 
-        if (typeof INDUSTRY_HIERARCHY === 'undefined' || typeof INDUSTRY_L1_BENCHMARK === 'undefined') {
+        if (typeof INDUSTRY_HIERARCHY === 'undefined' || typeof INDUSTRY_L1_BENCHMARK === 'undefined' ||
+            typeof INDUSTRY_L2_BENCHMARK === 'undefined' || typeof COMPANY_PERCENTILES === 'undefined') {
             console.warn('行业对标数据未加载');
             return;
         }
@@ -116,6 +117,15 @@ const BenchmarkModule = {
             .filter(k => INDUSTRY_L1_BENCHMARK[k])
             .sort();
 
+        if (allL1Codes.length === 0) {
+            this.heatmapChart.clear();
+            this.heatmapChart.setOption({
+                title: { text: '暂无行业对标数据', left: 'center', top: 'center',
+                         textStyle: { color: Utils.themeColors().textMuted, fontSize: 14 } }
+            }, true);
+            return;
+        }
+
         const yData = [];
         const heatData = [];
         const xData = metrics.map(m => this.metricLabels[m] || m);
@@ -141,15 +151,8 @@ const BenchmarkModule = {
                 }
 
                 if (value !== null && value !== undefined) {
-                    const isSelected = this.selectedL1 && l1Code === this.selectedL1;
-                    const isDimmed = this.selectedL1 && l1Code !== this.selectedL1;
                     heatData.push({
-                        value: [colIdx, rowIdx, Number(value)],
-                        itemStyle: {
-                            opacity: isDimmed ? 0.18 : 0.88,
-                            borderColor: isSelected ? themes.textLight : 'transparent',
-                            borderWidth: isSelected ? 1.5 : 0
-                        }
+                        value: [colIdx, rowIdx, Number(value)]
                     });
                 }
             });
@@ -218,6 +221,14 @@ const BenchmarkModule = {
                 name: this.metricLabels[this.activeDim] || this.activeDim,
                 type: 'heatmap',
                 data: heatData,
+                itemStyle: {
+                    opacity: function(params) {
+                        if (!BenchmarkModule.selectedL1) return 1;
+                        var l1Codes = Object.keys(INDUSTRY_HIERARCHY).filter(function(k) { return INDUSTRY_L1_BENCHMARK[k]; }).sort();
+                        var selIdx = l1Codes.indexOf(BenchmarkModule.selectedL1);
+                        return params.value[1] === selIdx ? 1 : 0.22;
+                    }
+                },
                 label: {
                     show: true,
                     fontSize: 9,
@@ -468,6 +479,13 @@ const BenchmarkModule = {
 
         var dim = this.activeDim;
         var metrics = this.dimMetrics[dim];
+        var isFin = (BenchmarkModule.selectedL1 === 'J');
+        var isPG = (dim === 'profit' || dim === 'growth');
+        if (isFin && isPG) {
+            var tbody = document.getElementById('benchmark-company-tbody');
+            tbody.innerHTML = '<tr><td colspan="' + (3 + metrics.length) + '" style="text-align:center;padding:40px;color:var(--text-muted);">金融行业盈利/成长指标口径特殊，请切换至「风险质量」或「规模分布」维度查看</td></tr>';
+            return;
+        }
         var thead = document.getElementById('benchmark-company-thead');
         var tbody = document.getElementById('benchmark-company-tbody');
 
