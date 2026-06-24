@@ -967,6 +967,35 @@ def main():
 
         print(f"  计算完成 {len(INDUSTRY_RD_BENCHMARK)} 个行业组基准")
 
+        # -- 5.9 R&D heatmap data generation --
+        print("生成 R&D 热力图数据...")
+        # 按 (年份, 行业组) 计算研发强度中位数
+        year_group_bench = {}
+        unique_years = sorted(df_raw['year'].unique())
+        for year in unique_years:
+            yr_data = df_raw[df_raw['year'] == year].copy()
+            # 合并行业组
+            yr_data['rd_group'] = yr_data['stkcd'].map(stkcd_group)
+            for g_name in yr_data['rd_group'].dropna().unique():
+                if g_name is None: continue
+                g_data = yr_data[yr_data['rd_group'] == g_name]
+                valid = g_data[g_data['rd_expense'].notna() & (g_data['rd_expense'] > 0) & g_data['revenue'].notna() & (g_data['revenue'] > 0)]
+                if len(valid) == 0: continue
+                intensities = (valid['rd_expense'] / valid['revenue'] * 100).tolist()
+                intensities.sort()
+                n = len(intensities)
+                key = f"{year}|{g_name}"
+                year_group_bench[key] = {
+                    'year': int(year),
+                    'group': g_name,
+                    'n': n,
+                    'median': round(intensities[n//2], 2),
+                    'p25': round(intensities[n//4], 2) if n > 1 else None,
+                    'p75': round(intensities[3*n//4], 2) if n > 3 else None,
+                }
+
+        RD_HEATMAP_DATA = list(year_group_bench.values())
+
     print("研发竞争力数据管线完成")
 
     # 5. 输出合并后的 JS 文件
@@ -1000,6 +1029,7 @@ def main():
         f.write(f"const INDUSTRY_RD_BENCHMARK = {json.dumps(INDUSTRY_RD_BENCHMARK, ensure_ascii=False)};\n")
         f.write(f"const RD_INDUSTRY_GROUPS = {json.dumps({k: v for k, v in INDUSTRY_GROUPS.items() if k != 'all'}, ensure_ascii=False)};\n")
         f.write(f"const RD_DEFAULT_WEIGHTS = {json.dumps(DEFAULT_WEIGHTS, ensure_ascii=False)};\n")
+        f.write(f"const RD_HEATMAP_DATA = {json.dumps(RD_HEATMAP_DATA, ensure_ascii=False)};\n")
 
     print("数据预处理全部完成！")
 

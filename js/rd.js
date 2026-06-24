@@ -227,37 +227,50 @@ const RDModule = {
         if (!this.heatmapChart) {
             this.heatmapChart = echarts.init(document.getElementById('rd-heatmap-chart'), Utils.getTheme());
         }
-        const groups = this.activeGroup === 'all'
+        if (typeof RD_HEATMAP_DATA === 'undefined') {
+            console.warn('热力图数据未加载');
+            return;
+        }
+        const groupsToShow = this.activeGroup === 'all'
             ? Object.keys(RD_INDUSTRY_GROUPS)
             : [this.activeGroup];
-        const years = [...new Set(Object.values(RD_SCORES).map(r => r.year))].sort();
-        const data = [];
+        const groupNames = groupsToShow.map(g => RD_INDUSTRY_GROUPS[g]?.name || g);
+        const years = [...new Set(RD_HEATMAP_DATA.map(d => d.year))].sort();
+        const heatData = [];
         let maxVal = 0;
-        for (const g of groups) {
-            const bench = INDUSTRY_RD_BENCHMARK[g];
-            if (!bench) continue;
-            for (const y of years) {
-                const val = bench.rd_intensity_median ?? 0;
-                data.push([g, y, val]);
-                if (val > maxVal) maxVal = val;
-            }
+        for (const d of RD_HEATMAP_DATA) {
+            if (!groupsToShow.includes(d.group)) continue;
+            heatData.push([d.year, d.group, d.median]);
+            if (d.median > maxVal) maxVal = d.median;
         }
         this.heatmapChart.setOption({
-            tooltip: { position: 'top' },
-            grid: { left: '14%', right: '5%', top: '5%', bottom: '8%' },
-            xAxis: { type: 'category', data: years, splitArea: { show: true } },
+            tooltip: {
+                position: 'top',
+                formatter: (params) => {
+                    const d = RD_HEATMAP_DATA.find(x => x.year === params.value[0] && x.group === params.value[1]);
+                    return `${RD_INDUSTRY_GROUPS[d.group]?.name || d.group} ${d.year}<br/>研发强度中位数: ${d.median}%<br/>样本: ${d.n} 家公司`;
+                }
+            },
+            grid: { left: '14%', right: '5%', top: '5%', bottom: '14%' },
+            xAxis: { type: 'category', data: years, splitArea: { show: true }, axisLabel: { fontSize: 11 } },
             yAxis: {
                 type: 'category',
-                data: groups.map(g => RD_INDUSTRY_GROUPS[g]?.name || g),
-                splitArea: { show: true }
+                data: groupNames,
+                splitArea: { show: true },
+                axisLabel: { fontSize: 11 }
             },
-            visualMap: { min: 0, max: maxVal || 1, calculable: true,
-                orient: 'horizontal', left: 'center', bottom: '0%',
+            visualMap: {
+                min: 0,
+                max: maxVal || 1,
+                calculable: true,
+                orient: 'horizontal',
+                left: 'center',
+                bottom: '0%',
                 inRange: { color: ['#f0f9ff', '#bae6fd', '#7dd3fc', '#38bdf8', '#0284c7'] }
             },
             series: [{
                 type: 'heatmap',
-                data: data.map(d => [d[1], d[0], d[2]]),
+                data: heatData,
                 label: { show: true, fontSize: 10 },
                 emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.5)' } }
             }]
