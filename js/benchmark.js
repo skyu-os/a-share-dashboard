@@ -452,13 +452,101 @@ const BenchmarkModule = {
 
     // ========== 个股排名 (右栏) ==========
     renderCompanyRank() {
-        if (!this.selectedL2) {
-            this.clearCompanyPanel();
-            return;
+        if (!this.selectedL2) { this.clearCompanyPanel(); return; }
+        var l2Info = INDUSTRY_L2_BENCHMARK[this.selectedL2];
+        if (!l2Info) { this.clearCompanyPanel(); return; }
+
+        // Update title
+        var titleEl = document.getElementById('benchmark-company-title');
+        var size = l2Info.sample_size;
+        var name = l2Info.name || this.selectedL2;
+        var title = '个股分位排名 — ' + name + ' (' + size + '家)';
+        if (size < 5) {
+            title += ' ⚠️ 样本不足5家，分位仅供参考';
         }
-        // 占位：任务6实现
-        document.getElementById('benchmark-company-title').textContent = '个股排名 — 任务6实现';
-        document.getElementById('benchmark-company-tbody').innerHTML = '';
+        titleEl.textContent = title;
+
+        var dim = this.activeDim;
+        var metrics = this.dimMetrics[dim];
+        var thead = document.getElementById('benchmark-company-thead');
+        var tbody = document.getElementById('benchmark-company-tbody');
+
+        // Build table header
+        var headerHtml = '<tr><th>排名</th><th>代码</th><th>简称</th>';
+        metrics.forEach(function(mk) {
+            headerHtml += '<th>' + (BenchmarkModule.metricLabels[mk] || mk) + '</th>';
+        });
+        headerHtml += '</tr>';
+        thead.innerHTML = headerHtml;
+
+        // Collect all companies in this L2 industry
+        var codes = l2Info.companies || [];
+        var companies = [];
+        var self = this;
+        codes.forEach(function(code) {
+            var cp = COMPANY_PERCENTILES[code];
+            var cm = COMPANY_METRICS[code];
+            if (!cp || !cm) return;
+
+            // Determine sort value based on active dimension
+            var sortVal = null;
+            if (dim === 'composite') {
+                sortVal = cp.percentiles.composite || 0;
+            } else {
+                var mainMk = metrics[0];
+                sortVal = cp.percentiles[mainMk];
+                if (sortVal == null) sortVal = 0;
+            }
+            companies.push({ code: code, sortVal: sortVal });
+        });
+
+        // Sort descending
+        companies.sort(function(a, b) { return (b.sortVal || 0) - (a.sortVal || 0); });
+
+        // Apply Top-N filter
+        var topNSelect = document.getElementById('company-top-n');
+        var topN = topNSelect ? topNSelect.value : '20';
+        var displayCompanies = topN === 'all' ? companies : companies.slice(0, parseInt(topN));
+
+        // Render rows
+        var bodyHtml = '';
+        displayCompanies.forEach(function(c, idx) {
+            var cp = COMPANY_PERCENTILES[c.code];
+            var cm = COMPANY_METRICS[c.code];
+            if (!cp || !cm) return;
+
+            bodyHtml += '<tr data-code="' + Utils.escapeHtml(c.code) + '">';
+            bodyHtml += '<td>' + (idx + 1) + '</td>';
+            bodyHtml += '<td>' + c.code + '</td>';
+            bodyHtml += '<td>' + Utils.escapeHtml(cm.name || c.code) + '</td>';
+
+            metrics.forEach(function(mk) {
+                var pctVal = null;
+                if (mk === 'composite') {
+                    pctVal = cp.percentiles.composite;
+                } else {
+                    pctVal = cp.percentiles[mk];
+                }
+                if (pctVal != null) {
+                    bodyHtml += '<td class="' + self.dimColor(pctVal) + '">' + parseFloat(pctVal.toFixed(1)) + '%</td>';
+                } else {
+                    bodyHtml += '<td class="perc-na">--</td>';
+                }
+            });
+
+            bodyHtml += '</tr>';
+        });
+        tbody.innerHTML = bodyHtml;
+
+        // Bind click to open company drawer
+        tbody.querySelectorAll('tr').forEach(function(tr) {
+            tr.addEventListener('click', function() {
+                var code = tr.getAttribute('data-code');
+                if (code && typeof CompanyModule !== 'undefined') {
+                    CompanyModule.openDrawer(code);
+                }
+            });
+        });
     },
 
     // ========== 面包屑导航 ==========
