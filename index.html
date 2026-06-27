@@ -27,6 +27,7 @@
             <a href="#industry" class="nav-tab" data-tab="industry">行业透视</a>
             <a href="#benchmark" class="nav-tab" data-tab="benchmark">行业对标</a>
             <a href="#rd" class="nav-tab" data-tab="rd">研发竞争力</a>
+            <a href="#ai-chain" class="nav-tab" data-tab="ai-chain">AI产业链</a>
             <a href="#crisis" class="nav-tab" data-tab="crisis">危机穿越</a>
             <a href="#risk" class="nav-tab" data-tab="risk">风险预警</a>
             <a href="#factor" class="nav-tab" data-tab="factor">因子分解</a>
@@ -819,6 +820,119 @@
 
         </section>
 
+        <!-- AI 产业链 (AI Industry Chain) -->
+        <section id="ai-chain-tab" class="tab-content">
+
+            <div class="grid-cols-4 ai-chain-kpis">
+                <div class="card kpi-card">
+                    <div class="kpi-header">
+                        <span>候选池企业</span>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg>
+                    </div>
+                    <div class="kpi-value" id="ai-chain-kpi-count">--</div>
+                    <div class="kpi-trend"><span id="ai-chain-kpi-count-sub">Phase 0 行业映射识别</span></div>
+                </div>
+                <div class="card kpi-card">
+                    <div class="kpi-header">
+                        <span>平均候选热度</span>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-6"/></svg>
+                    </div>
+                    <div class="kpi-value" id="ai-chain-kpi-score">--</div>
+                    <div class="kpi-trend"><span>财务质量 + 成长 + R&D 代理</span></div>
+                </div>
+                <div class="card kpi-card">
+                    <div class="kpi-header">
+                        <span>研发覆盖率</span>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+                    </div>
+                    <div class="kpi-value" id="ai-chain-kpi-rd">--%</div>
+                    <div class="kpi-trend"><span>有研发竞争力评分的样本占比</span></div>
+                </div>
+                <div class="card kpi-card">
+                    <div class="kpi-header">
+                        <span>排雷通过率</span>
+                        <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+                    </div>
+                    <div class="kpi-value" id="ai-chain-kpi-safe">--%</div>
+                    <div class="kpi-trend"><span>Phase 1 财务排雷代理</span></div>
+                </div>
+            </div>
+
+            <div class="toolbar ai-chain-toolbar">
+                <div class="toolbar-label">AI 产业链环节</div>
+                <div class="toolbar-select-area" id="ai-chain-layer-buttons">
+                    <!-- JS 渲染 -->
+                </div>
+                <div class="toolbar-select-area" style="margin-left:auto;">
+                    <select class="custom-select" id="ai-chain-sort">
+                        <option value="chainScore">候选热度</option>
+                        <option value="rdScore">研发竞争力</option>
+                        <option value="revenueCagr">营收 CAGR</option>
+                        <option value="roe">ROE</option>
+                        <option value="revenue">营收规模</option>
+                    </select>
+                    <select class="custom-select" id="ai-chain-top-n">
+                        <option value="20">Top 20</option>
+                        <option value="50">Top 50</option>
+                        <option value="100">Top 100</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-cols-12">
+                <div class="card col-span-5">
+                    <div class="card-title">
+                        <span>环节候选热度对比</span>
+                        <span>均值=候选热度，样本量仅代表行业映射覆盖</span>
+                    </div>
+                    <div class="chart-container" id="ai-chain-layer-chart"></div>
+                </div>
+                <div class="card col-span-7">
+                    <div class="card-title">
+                        <span>成长 × 研发散点</span>
+                        <span>气泡大小=营收规模，颜色=产业链环节，非最终验证结论</span>
+                    </div>
+                    <div class="chart-container" id="ai-chain-scatter-chart"></div>
+                </div>
+            </div>
+
+            <div class="grid-cols-12">
+                <div class="card col-span-8">
+                    <div class="card-title">
+                        <span id="ai-chain-table-title">AI 产业链候选标的</span>
+                        <span>点击公司打开财务诊断抽屉</span>
+                    </div>
+                    <div class="table-wrapper ai-chain-table-wrapper">
+                        <table class="custom-table" id="ai-chain-company-table">
+                            <thead>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>代码</th>
+                                    <th>简称</th>
+                                    <th>环节</th>
+                                    <th>当前阶段</th>
+                                    <th>门禁</th>
+                                    <th>候选热度</th>
+                                    <th>R&D</th>
+                                    <th>营收CAGR</th>
+                                    <th>财务风险</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ai-chain-company-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card col-span-4">
+                    <div class="card-title">
+                        <span>环节画像</span>
+                        <span id="ai-chain-profile-subtitle">当前：全部</span>
+                    </div>
+                    <div class="ai-chain-profile" id="ai-chain-profile"></div>
+                </div>
+            </div>
+
+        </section>
+
     </main>
 
     <!-- 右侧滑出个股诊断抽屉面板 (Drawer Pattern) -->
@@ -901,6 +1015,7 @@
     <script src="market_data.js"></script>
     <script src="js/benchmark.js"></script>
     <script src="js/rd.js"></script>
+    <script src="js/ai-chain.js"></script>
     <script src="js/moat.js"></script>
     <script src="js/app.js"></script>
 </body>

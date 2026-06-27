@@ -104,6 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'rd':
                 if (typeof RDModule !== 'undefined') RDModule.init();
                 break;
+            case 'ai-chain':
+                if (typeof AIChainModule !== 'undefined') AIChainModule.init();
+                break;
             case 'company':
                 if (typeof CompanyModule !== 'undefined') CompanyModule.initSearchPage();
                 break;

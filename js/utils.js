@@ -74,6 +74,9 @@ const Utils = {
             case 'factor':    if (typeof FactorModule !== 'undefined')    FactorModule.init(); break;
             case 'screener':  if (typeof ScreenerModule !== 'undefined')  ScreenerModule.init(); break;
             case 'watchlist': if (typeof WatchlistModule !== 'undefined') WatchlistModule.init(); break;
+            case 'benchmark': if (typeof BenchmarkModule !== 'undefined') BenchmarkModule.init(); break;
+            case 'rd':        if (typeof RDModule !== 'undefined')        RDModule.init(); break;
+            case 'ai-chain':  if (typeof AIChainModule !== 'undefined')   AIChainModule.init(); break;
             case 'company':   if (typeof CompanyModule !== 'undefined')   CompanyModule.initSearchPage(); break;
         }
 
